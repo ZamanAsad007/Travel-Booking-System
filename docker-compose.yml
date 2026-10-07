@@ -47,6 +47,33 @@ services:
     networks:
       - travel-network
 
+  catalog-service:
+    build:
+      context: ./services/catalog-service
+      dockerfile: Dockerfile
+    container_name: travel_catalog_service
+    restart: unless-stopped
+    environment:
+      CATALOG_SERVICE_PORT: 3002
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      CATALOG_DB_NAME: ${CATALOG_DB_NAME:-catalog_db}
+    ports:
+      - "3002:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3002/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - travel-network
+
+
 networks:
   travel-network:
     driver: bridge
