@@ -2,6 +2,7 @@ import app from './app.js';
 import { config } from './config/env.js';
 import { pool } from './config/db.js';
 import { runMigrations } from './migrations/migrate.js';
+import { startBookingConsumer } from './events/bookingConsumer.js';
 
 async function waitForDb(retries = 10, delay = 2000) {
   for (let i = 0; i < retries; i++) {
@@ -24,6 +25,11 @@ async function startServer() {
 
     const server = app.listen(config.port, () => {
       console.log(`[booking-service] Running on port ${config.port}`);
+    });
+
+    // Start background saga event consumer
+    startBookingConsumer().catch((err) => {
+      console.error('[booking-service] Error starting saga event consumer:', err.message);
     });
 
     const shutdown = async (signal) => {

@@ -146,6 +146,36 @@ services:
     networks:
       - travel-network
 
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: travel_payment_service
+    restart: unless-stopped
+    environment:
+      PAYMENT_SERVICE_PORT: 3004
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PAYMENT_DB_NAME: ${PAYMENT_DB_NAME:-payment_db}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672}
+      PAYMENT_SUCCESS_RATE: ${PAYMENT_SUCCESS_RATE:-0.9}
+    ports:
+      - "3004:3004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3004/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - travel-network
+
   gateway:
     build:
       context: ./gateway
@@ -158,6 +188,7 @@ services:
       - auth-service
       - catalog-service
       - booking-service
+      - payment-service
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
       interval: 10s
@@ -165,6 +196,7 @@ services:
       retries: 3
     networks:
       - travel-network
+
 
 networks:
   travel-network:
