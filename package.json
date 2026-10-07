@@ -1,0 +1,13 @@
+{
+  "name": "travel-booking-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Microservices-based travel booking application",
+  "type": "module",
+  "scripts": {
+    "format": "prettier --write \"**/*.{js,json,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.5.0"
+  }
+}
