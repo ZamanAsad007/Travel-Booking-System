@@ -57,3 +57,9 @@ CREATE TABLE IF NOT EXISTS reservations (
 
 CREATE INDEX IF NOT EXISTS idx_reservations_item ON reservations(item_type, item_id);
 CREATE INDEX IF NOT EXISTS idx_reservations_booking ON reservations(booking_id);
+
+-- Idempotency table for event consumers
+CREATE TABLE IF NOT EXISTS processed_events (
+  event_id VARCHAR(255) PRIMARY KEY,
+  processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
