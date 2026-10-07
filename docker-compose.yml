@@ -73,6 +73,25 @@ services:
     networks:
       - travel-network
 
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: travel_gateway
+    restart: unless-stopped
+    ports:
+      - "${GATEWAY_PORT:-8080}:80"
+    depends_on:
+      - auth-service
+      - catalog-service
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - travel-network
+
 
 networks:
   travel-network:
