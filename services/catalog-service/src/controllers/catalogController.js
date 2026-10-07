@@ -86,6 +86,64 @@ export const catalogController = {
     }
   },
 
+  async createHold(req, res, next) {
+    try {
+      const { itemType, itemId, bookingId, quantity, ttlSeconds } = req.body;
+      const hold = await catalogService.createHold({
+        itemType,
+        itemId,
+        bookingId,
+        quantity: quantity ? parseInt(quantity, 10) : 1,
+        ttlSeconds: ttlSeconds ? parseInt(ttlSeconds, 10) : 600,
+      });
+
+      res.status(201).json({
+        success: true,
+        data: { hold },
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async releaseHolds(req, res, next) {
+    try {
+      const { bookingId } = req.params;
+      await catalogService.releaseHolds(bookingId);
+      res.status(200).json({
+        success: true,
+        data: { message: `Holds released for booking ${bookingId}` },
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async confirmHold(req, res, next) {
+    try {
+      const { bookingId } = req.params;
+      const { itemType, itemId, quantity, dateFrom, dateTo } = req.body;
+      const reservation = await catalogService.confirmHoldToReservation({
+        itemType,
+        itemId,
+        bookingId,
+        quantity: quantity ? parseInt(quantity, 10) : 1,
+        dateFrom,
+        dateTo,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: { reservation },
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async reserveItem(req, res, next) {
     try {
       const { itemType, itemId, bookingId, quantity, dateFrom, dateTo } = req.body;

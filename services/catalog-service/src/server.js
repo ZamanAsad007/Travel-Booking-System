@@ -3,6 +3,7 @@ import { config } from './config/env.js';
 import { pool } from './config/db.js';
 import { runMigrations } from './migrations/migrate.js';
 import { seedCatalogData } from './seeds/seed.js';
+import { startCatalogConsumer } from './events/catalogConsumer.js';
 
 async function waitForDb(retries = 10, delay = 2000) {
   for (let i = 0; i < retries; i++) {
@@ -26,6 +27,11 @@ async function startServer() {
 
     const server = app.listen(config.port, () => {
       console.log(`[catalog-service] Running on port ${config.port}`);
+    });
+
+    // Start background event consumer
+    startCatalogConsumer().catch((err) => {
+      console.error('[catalog-service] Error starting event consumer:', err.message);
     });
 
     const shutdown = async (signal) => {

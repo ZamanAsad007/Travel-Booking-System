@@ -1,6 +1,8 @@
 import { bookingRepository } from '../repositories/bookingRepository.js';
 import { catalogClient } from './catalogClient.js';
 import { BookingStateMachine, BookingStatus } from '../stateMachine/bookingStateMachine.js';
+import { eventBus } from '../../../../shared/events/eventBus.js';
+import { EVENTS } from '../../../../shared/constants/events.js';
 
 export const bookingService = {
   async createBooking({ userId, items }) {
@@ -45,30 +47,31 @@ export const bookingService = {
     });
 
     try {
-      // 3. Reserve inventory in catalog service over HTTP
+      // 3. Ask catalog service to create temporary inventory holds in Redis with TTL (10 min)
       for (const item of validatedItems) {
-        await catalogClient.reserveItem({
+        await catalogClient.createHold({
           itemType: item.itemType,
           itemId: item.itemId,
           bookingId: booking.id,
           quantity: item.quantity,
-          dateFrom: item.dateFrom,
-          dateTo: item.dateTo,
+          ttlSeconds: 600,
         });
       }
 
-      // 4. In synchronous phase, transition to CONFIRMED once reservations succeed
-      BookingStateMachine.validateTransition(BookingStatus.PENDING, BookingStatus.CONFIRMED);
-      const confirmedBooking = await bookingRepository.updateStatus(booking.id, BookingStatus.CONFIRMED);
+      // 4. Publish booking.created event to RabbitMQ topic exchange
+      await eventBus.publish(EVENTS.BOOKING_CREATED, {
+        bookingId: booking.id,
+        userId: booking.user_id,
+        amount: parseFloat(booking.total_amount),
+        items: validatedItems,
+      });
 
-      return {
-        ...booking,
-        status: confirmedBooking.status,
-        updated_at: confirmedBooking.updated_at,
-      };
+      console.log(`[booking-service] Booking ${booking.id} created and event published (PENDING)`);
+
+      return booking;
     } catch (err) {
-      // If reservation fails, transition to CANCELLED and release
-      await catalogClient.releaseReservation(booking.id);
+      // If holding or event publishing fails, clean up and cancel booking
+      await catalogClient.releaseHold(booking.id);
       await bookingRepository.updateStatus(booking.id, BookingStatus.CANCELLED);
       throw err;
     }
@@ -103,11 +106,21 @@ export const bookingService = {
     // Validate state machine transition
     BookingStateMachine.validateTransition(booking.status, BookingStatus.CANCELLED);
 
-    // Release catalog reservation over HTTP
-    await catalogClient.releaseReservation(id);
+    // Release Redis hold and any reservation
+    await catalogClient.releaseHold(id);
 
     // Update status to CANCELLED
     const updated = await bookingRepository.updateStatus(id, BookingStatus.CANCELLED);
+
+    // Publish booking.cancelled event so payment (refund) and catalog receive notification
+    await eventBus.publish(EVENTS.BOOKING_CANCELLED, {
+      bookingId: id,
+      userId: booking.user_id,
+      amount: parseFloat(booking.total_amount),
+      items: booking.items,
+    });
+
+    console.log(`[booking-service] Booking ${id} cancelled and event published`);
 
     return {
       ...booking,

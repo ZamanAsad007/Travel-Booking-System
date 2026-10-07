@@ -10,12 +10,14 @@
     "migrate": "node src/migrations/migrate.js"
   },
   "dependencies": {
+    "amqplib": "^0.10.4",
     "axios": "^1.7.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.11.5",
+    "uuid": "^9.0.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {

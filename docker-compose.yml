@@ -19,6 +19,40 @@ services:
     networks:
       - travel-network
 
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: travel_rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - travel-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: travel_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - travel-network
+
   auth-service:
     build:
       context: ./services/auth-service
@@ -60,10 +94,16 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       CATALOG_DB_NAME: ${CATALOG_DB_NAME:-catalog_db}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     ports:
       - "3002:3002"
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3002/health || exit 1"]
@@ -88,12 +128,15 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       BOOKING_DB_NAME: ${BOOKING_DB_NAME:-booking_db}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672}
     ports:
       - "3003:3003"
     depends_on:
       postgres:
         condition: service_healthy
       catalog-service:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3003/health || exit 1"]
@@ -123,10 +166,10 @@ services:
     networks:
       - travel-network
 
-
 networks:
   travel-network:
     driver: bridge
 
 volumes:
   postgres_data:
+  redis_data:

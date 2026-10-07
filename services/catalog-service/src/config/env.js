@@ -3,6 +3,8 @@ dotenv.config();
 
 export const config = {
   port: parseInt(process.env.CATALOG_SERVICE_PORT || '3002', 10),
+  redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+  rabbitmqUrl: process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672',
   db: {
     host: process.env.POSTGRES_HOST || 'localhost',
     port: parseInt(process.env.POSTGRES_PORT || '5432', 10),

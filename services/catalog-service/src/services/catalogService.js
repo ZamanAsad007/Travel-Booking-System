@@ -1,10 +1,26 @@
 import { flightRepository } from '../repositories/flightRepository.js';
 import { hotelRepository } from '../repositories/hotelRepository.js';
 import { reservationRepository } from '../repositories/reservationRepository.js';
+import { holdService } from './holdService.js';
 
 export const catalogService = {
   async searchFlights(params) {
-    return flightRepository.search(params);
+    const result = await flightRepository.search(params);
+    // Adjust seats_available with active Redis holds
+    const enrichedFlights = await Promise.all(
+      result.flights.map(async (flight) => {
+        const heldCount = await holdService.getActiveHoldCount('flight', flight.id);
+        const actualAvailable = Math.max(0, flight.seats_available - heldCount);
+        return {
+          ...flight,
+          seats_available: actualAvailable,
+        };
+      })
+    );
+    return {
+      ...result,
+      flights: enrichedFlights,
+    };
   },
 
   async getFlightById(id) {
@@ -15,7 +31,14 @@ export const catalogService = {
       err.code = 'FLIGHT_NOT_FOUND';
       throw err;
     }
-    return flight;
+
+    const heldCount = await holdService.getActiveHoldCount('flight', id);
+    const actualAvailable = Math.max(0, flight.seats_available - heldCount);
+
+    return {
+      ...flight,
+      seats_available: actualAvailable,
+    };
   },
 
   async searchHotels(params) {
@@ -30,15 +53,27 @@ export const catalogService = {
       err.code = 'HOTEL_NOT_FOUND';
       throw err;
     }
-    return hotel;
+
+    const enrichedRooms = await Promise.all(
+      hotel.rooms.map(async (room) => {
+        const heldCount = await holdService.getActiveHoldCount('hotel', room.id);
+        const actualAvailable = Math.max(0, room.rooms_available - heldCount);
+        return {
+          ...room,
+          rooms_available: actualAvailable,
+        };
+      })
+    );
+
+    return {
+      ...hotel,
+      rooms: enrichedRooms,
+    };
   },
 
   async checkAvailability({ itemType, itemId, quantity = 1 }) {
     if (itemType === 'flight') {
-      const flight = await flightRepository.findById(itemId);
-      if (!flight) {
-        return { available: false, reason: 'Flight not found', item: null };
-      }
+      const flight = await this.getFlightById(itemId);
       const isAvailable = flight.seats_available >= quantity;
       return {
         available: isAvailable,
@@ -51,10 +86,12 @@ export const catalogService = {
       if (!room) {
         return { available: false, reason: 'Room not found', item: null };
       }
-      const isAvailable = room.rooms_available >= quantity;
+      const heldCount = await holdService.getActiveHoldCount('hotel', itemId);
+      const actualAvailable = Math.max(0, room.rooms_available - heldCount);
+      const isAvailable = actualAvailable >= quantity;
       return {
         available: isAvailable,
-        availableCount: room.rooms_available,
+        availableCount: actualAvailable,
         unitPrice: parseFloat(room.price_per_night),
         item: room,
       };
@@ -66,16 +103,28 @@ export const catalogService = {
     }
   },
 
-  async reserveItem({ itemType, itemId, bookingId, quantity = 1, dateFrom, dateTo }) {
+  async createHold({ itemType, itemId, bookingId, quantity = 1, ttlSeconds = 600 }) {
     const availability = await this.checkAvailability({ itemType, itemId, quantity });
     if (!availability.available) {
-      const err = new Error(`Item ${itemId} has insufficient availability`);
+      const err = new Error(`Item ${itemId} (${itemType}) is unavailable or sold out`);
       err.statusCode = 409;
       err.code = 'INSUFFICIENT_AVAILABILITY';
       throw err;
     }
 
-    const reservation = await reservationRepository.createReservation({
+    return holdService.createHold({ itemType, itemId, bookingId, quantity, ttlSeconds });
+  },
+
+  async releaseHolds(bookingId) {
+    return holdService.releaseAllHoldsForBooking(bookingId);
+  },
+
+  async confirmHoldToReservation(params) {
+    return holdService.confirmHoldToReservation(params);
+  },
+
+  async reserveItem({ itemType, itemId, bookingId, quantity = 1, dateFrom, dateTo }) {
+    return reservationRepository.createReservation({
       itemType,
       itemId,
       bookingId,
@@ -84,8 +133,6 @@ export const catalogService = {
       dateTo,
       status: 'CONFIRMED',
     });
-
-    return reservation;
   },
 
   async releaseReservation(bookingId) {
