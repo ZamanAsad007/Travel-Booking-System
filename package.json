@@ -5,7 +5,12 @@
   "description": "Microservices-based travel booking application",
   "type": "module",
   "scripts": {
-    "format": "prettier --write \"**/*.{js,json,md}\""
+    "format": "prettier --write \"**/*.{js,json,md}\"",
+    "up": "docker compose up -d",
+    "down": "docker compose down",
+    "build": "docker compose up --build -d",
+    "seed": "docker compose exec catalog-service node src/seeds/seed.js",
+    "logs": "docker compose logs -f"
   },
   "devDependencies": {
     "prettier": "^3.5.0"

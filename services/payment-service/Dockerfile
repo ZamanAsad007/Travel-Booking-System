@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for Payment Service
 FROM node:20-alpine AS dependencies
 WORKDIR /app
-COPY package*.json ./
+COPY services/payment-service/package*.json ./
 RUN npm ci --only=production
 
 FROM node:20-alpine AS runner
@@ -12,9 +12,10 @@ ENV NODE_ENV=production
 # Security: non-root user
 USER node
 
-COPY --chown=node:node package*.json ./
+COPY --chown=node:node services/payment-service/package*.json ./
 COPY --chown=node:node --from=dependencies /app/node_modules ./node_modules
-COPY --chown=node:node src ./src
+COPY --chown=node:node services/payment-service/src ./src
+COPY --chown=node:node shared /shared
 
 EXPOSE 3004
 
