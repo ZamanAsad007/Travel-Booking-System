@@ -1,0 +1,46 @@
+import { notificationRepository } from '../repositories/notificationRepository.js';
+
+export const notificationController = {
+  async listNotifications(req, res, next) {
+    try {
+      const { userId, bookingId, limit, offset } = req.query;
+      const notifications = await notificationRepository.findAll({
+        userId,
+        bookingId,
+        limit: limit ? parseInt(limit, 10) : 50,
+        offset: offset ? parseInt(offset, 10) : 0,
+      });
+
+      res.status(200).json({
+        success: true,
+        data: { notifications },
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getById(req, res, next) {
+    try {
+      const { id } = req.params;
+      const notification = await notificationRepository.findById(id);
+
+      if (!notification) {
+        return res.status(404).json({
+          success: false,
+          data: null,
+          error: { message: 'Notification not found' },
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        data: { notification },
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+};

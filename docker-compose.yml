@@ -176,6 +176,50 @@ services:
     networks:
       - travel-network
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: travel_mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - travel-network
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: travel_notification_service
+    restart: unless-stopped
+    environment:
+      NOTIFICATION_SERVICE_PORT: 3005
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      NOTIFICATION_DB_NAME: ${NOTIFICATION_DB_NAME:-notification_db}
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672}
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      EMAIL_FROM: ${EMAIL_FROM:-Travel Booking <noreply@travelbooking.local>}
+    ports:
+      - "3005:3005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3005/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - travel-network
+
   gateway:
     build:
       context: ./gateway
@@ -189,6 +233,7 @@ services:
       - catalog-service
       - booking-service
       - payment-service
+      - notification-service
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
       interval: 10s
