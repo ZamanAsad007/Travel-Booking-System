@@ -5,6 +5,10 @@ import Footer from './components/Footer.jsx';
 import HomePage from './pages/HomePage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
+import FlightSearchPage from './pages/FlightSearchPage.jsx';
+import FlightDetailPage from './pages/FlightDetailPage.jsx';
+import HotelSearchPage from './pages/HotelSearchPage.jsx';
+import HotelDetailPage from './pages/HotelDetailPage.jsx';
 
 export default function App() {
   return (
@@ -13,6 +17,10 @@ export default function App() {
       <main className="main-content">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/flights" element={<FlightSearchPage />} />
+          <Route path="/flights/:id" element={<FlightDetailPage />} />
+          <Route path="/hotels" element={<HotelSearchPage />} />
+          <Route path="/hotels/:id" element={<HotelDetailPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
         </Routes>
