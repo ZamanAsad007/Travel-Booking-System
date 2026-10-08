@@ -74,7 +74,23 @@ class EventBus {
 
   async subscribe(queueName, routingKeys, handler, options = { prefetch: 1 }) {
     const channel = await this.connect();
-    await channel.assertQueue(queueName, { durable: true });
+
+    const queueOptions = { durable: true };
+    if (options.withDlq) {
+      const dlx = options.dlxExchange || 'travel.events.dlx';
+      const dlq = options.dlqQueue || `${queueName}.dlq`;
+      const dlRoutingKey = `${queueName}.dlq`;
+
+      await channel.assertExchange(dlx, 'direct', { durable: true });
+      await channel.assertQueue(dlq, { durable: true });
+      await channel.bindQueue(dlq, dlx, dlRoutingKey);
+
+      queueOptions.deadLetterExchange = dlx;
+      queueOptions.deadLetterRoutingKey = dlRoutingKey;
+      console.log(`[EventBus] Configured DLQ '${dlq}' with DLX '${dlx}' for queue '${queueName}'`);
+    }
+
+    await channel.assertQueue(queueName, queueOptions);
     await channel.prefetch(options.prefetch || 1);
 
     const keys = Array.isArray(routingKeys) ? routingKeys : [routingKeys];
