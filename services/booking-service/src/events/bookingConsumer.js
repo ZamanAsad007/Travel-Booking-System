@@ -34,13 +34,17 @@ export async function startBookingConsumer() {
           items: booking.items,
         });
       } else {
-        console.warn(`[booking-service] Cannot transition booking ${bookingId} from ${booking.status} to CONFIRMED`);
+        console.warn(
+          `[booking-service] Cannot transition booking ${bookingId} from ${booking.status} to CONFIRMED`
+        );
       }
     } else if (type === EVENTS.PAYMENT_FAILED) {
       // Transition from PENDING to CANCELLED
       if (BookingStateMachine.canTransition(booking.status, BookingStatus.CANCELLED)) {
         await bookingRepository.updateStatus(bookingId, BookingStatus.CANCELLED);
-        console.warn(`[booking-service] Booking ${bookingId} marked as CANCELLED due to payment failure`);
+        console.warn(
+          `[booking-service] Booking ${bookingId} marked as CANCELLED due to payment failure`
+        );
 
         // Publish booking.cancelled so catalog releases holds
         await eventBus.publish(EVENTS.BOOKING_CANCELLED, {
@@ -51,7 +55,9 @@ export async function startBookingConsumer() {
           reason: data.reason || 'Payment failed',
         });
       } else {
-        console.warn(`[booking-service] Cannot transition booking ${bookingId} from ${booking.status} to CANCELLED`);
+        console.warn(
+          `[booking-service] Cannot transition booking ${bookingId} from ${booking.status} to CANCELLED`
+        );
       }
     }
   };

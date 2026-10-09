@@ -40,7 +40,11 @@ router.delete('/holds/:bookingId', catalogController.releaseHolds);
 router.post('/holds/:bookingId/confirm', catalogController.confirmHold);
 
 // Internal availability and direct reservation endpoints
-router.post('/check-availability', validate(availabilitySchema), catalogController.checkAvailability);
+router.post(
+  '/check-availability',
+  validate(availabilitySchema),
+  catalogController.checkAvailability
+);
 router.post('/reserve', validate(reserveSchema), catalogController.reserveItem);
 router.post('/reservations/:bookingId/release', catalogController.releaseReservation);
 

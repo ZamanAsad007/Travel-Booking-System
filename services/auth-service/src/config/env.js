@@ -3,7 +3,8 @@ dotenv.config();
 
 export const config = {
   port: parseInt(process.env.AUTH_SERVICE_PORT || '3001', 10),
-  jwtSecret: process.env.JWT_SECRET || 'travel_booking_super_secret_jwt_key_2026_change_in_production',
+  jwtSecret:
+    process.env.JWT_SECRET || 'travel_booking_super_secret_jwt_key_2026_change_in_production',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   db: {
     host: process.env.POSTGRES_HOST || 'localhost',

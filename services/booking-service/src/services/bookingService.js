@@ -18,7 +18,11 @@ export const bookingService = {
     let totalAmount = 0;
 
     for (const item of items) {
-      const check = await catalogClient.checkAvailability(item.itemType, item.itemId, item.quantity);
+      const check = await catalogClient.checkAvailability(
+        item.itemType,
+        item.itemId,
+        item.quantity
+      );
       if (!check.available) {
         const err = new Error(
           `Item ${item.itemId} (${item.itemType}) is unavailable or has insufficient capacity`

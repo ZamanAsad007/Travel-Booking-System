@@ -6,7 +6,9 @@ import { config } from '../config/env.js';
 
 export const paymentService = {
   async processPayment({ bookingId, amount, userId, items = [] }) {
-    console.log(`[payment-service] Processing mock payment for booking ${bookingId} ($${amount})...`);
+    console.log(
+      `[payment-service] Processing mock payment for booking ${bookingId} ($${amount})...`
+    );
 
     // Simulate real gateway processing delay
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -24,7 +26,9 @@ export const paymentService = {
     });
 
     if (isSuccess) {
-      console.log(`[payment-service] Payment SUCCEEDED for booking ${bookingId} (${transactionRef})`);
+      console.log(
+        `[payment-service] Payment SUCCEEDED for booking ${bookingId} (${transactionRef})`
+      );
       await eventBus.publish(EVENTS.PAYMENT_SUCCEEDED, {
         bookingId,
         userId,
@@ -50,7 +54,9 @@ export const paymentService = {
 
     const latestPayment = await paymentRepository.findLatestByBookingId(bookingId);
     if (!latestPayment || latestPayment.status !== 'SUCCESS') {
-      console.log(`[payment-service] No successful payment found to refund for booking ${bookingId}`);
+      console.log(
+        `[payment-service] No successful payment found to refund for booking ${bookingId}`
+      );
       return null;
     }
 

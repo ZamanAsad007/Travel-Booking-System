@@ -6,7 +6,11 @@ export const BookingStatus = {
 };
 
 const ALLOWED_TRANSITIONS = {
-  [BookingStatus.PENDING]: [BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.EXPIRED],
+  [BookingStatus.PENDING]: [
+    BookingStatus.CONFIRMED,
+    BookingStatus.CANCELLED,
+    BookingStatus.EXPIRED,
+  ],
   [BookingStatus.CONFIRMED]: [BookingStatus.CANCELLED],
   [BookingStatus.CANCELLED]: [],
   [BookingStatus.EXPIRED]: [],

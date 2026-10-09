@@ -30,7 +30,9 @@ export async function startCatalogConsumer() {
     } else if (type === EVENTS.BOOKING_CANCELLED) {
       // Release holds and any created reservations
       await catalogService.releaseHolds(data.bookingId);
-      console.log(`[catalog-service] Released holds and cancelled reservations for booking: ${data.bookingId}`);
+      console.log(
+        `[catalog-service] Released holds and cancelled reservations for booking: ${data.bookingId}`
+      );
     }
   };
 

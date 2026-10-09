@@ -69,7 +69,9 @@ export const holdService = {
 
     if (keysToDelete.length > 0) {
       await redis.del(...keysToDelete);
-      console.log(`[catalog-service] Released ${keysToDelete.length} holds for booking ${bookingId}`);
+      console.log(
+        `[catalog-service] Released ${keysToDelete.length} holds for booking ${bookingId}`
+      );
     }
 
     // Also update any database reservations if present
@@ -90,7 +92,9 @@ export const holdService = {
 
     // 2. Remove Redis hold key since it is now permanently reserved
     await this.releaseHold(itemType, itemId, bookingId);
-    console.log(`[catalog-service] Converted hold to confirmed reservation for booking ${bookingId}`);
+    console.log(
+      `[catalog-service] Converted hold to confirmed reservation for booking ${bookingId}`
+    );
     return reservation;
   },
 };
