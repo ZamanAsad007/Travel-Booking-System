@@ -1,0 +1,323 @@
+openapi: 3.0.3
+info:
+  title: Travel Booking System API
+  description: Microservices-based travel booking system (flights + hotels) with event-driven Saga choreography using RabbitMQ, PostgreSQL, and Redis.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Nginx API Gateway
+
+paths:
+  /health:
+    get:
+      summary: Gateway Health Check
+      responses:
+        '200':
+          description: Gateway is healthy
+          content:
+            application/json:
+              example:
+                success: true
+                data:
+                  service: gateway
+                  status: healthy
+                error: null
+
+  /api/auth/register:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                  example: Jane Doe
+                email:
+                  type: string
+                  format: email
+                  example: jane@example.com
+                password:
+                  type: string
+                  minLength: 6
+                  example: secret1234
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Validation error or email already in use
+
+  /api/auth/login:
+    post:
+      summary: User login
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: jane@example.com
+                password:
+                  type: string
+                  example: secret1234
+      responses:
+        '200':
+          description: Login successful with JWT
+        '401':
+          description: Invalid credentials
+
+  /api/auth/me:
+    get:
+      summary: Get current authenticated user profile
+      tags: [Auth]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile
+        '401':
+          description: Unauthorized
+
+  /api/catalog/flights:
+    get:
+      summary: Search flights
+      tags: [Catalog]
+      parameters:
+        - in: query
+          name: origin
+          schema:
+            type: string
+          example: JFK
+        - in: query
+          name: destination
+          schema:
+            type: string
+          example: LAX
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+          example: 2026-11-01
+      responses:
+        '200':
+          description: List of available flights
+
+  /api/catalog/flights/{id}:
+    get:
+      summary: Get flight details
+      tags: [Catalog]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Flight details
+        '404':
+          description: Flight not found
+
+  /api/catalog/hotels:
+    get:
+      summary: Search hotels
+      tags: [Catalog]
+      parameters:
+        - in: query
+          name: city
+          schema:
+            type: string
+          example: Paris
+        - in: query
+          name: checkIn
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: checkOut
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of hotels
+
+  /api/catalog/hotels/{id}:
+    get:
+      summary: Get hotel details with rooms
+      tags: [Catalog]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Hotel details with available rooms
+        '404':
+          description: Hotel not found
+
+  /api/catalog/holds:
+    post:
+      summary: Create temporary inventory hold (Redis TTL)
+      tags: [Catalog]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemType, itemId, bookingId]
+              properties:
+                itemType:
+                  type: string
+                  enum: [flight, hotel]
+                itemId:
+                  type: string
+                  format: uuid
+                bookingId:
+                  type: string
+                  format: uuid
+                quantity:
+                  type: integer
+                  default: 1
+                ttlSeconds:
+                  type: integer
+                  default: 600
+      responses:
+        '201':
+          description: Hold created successfully
+        '409':
+          description: Insufficient inventory
+
+  /api/bookings:
+    post:
+      summary: Create a booking (initiates saga)
+      tags: [Bookings]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [itemType, itemId, quantity]
+                    properties:
+                      itemType:
+                        type: string
+                        enum: [flight, hotel]
+                      itemId:
+                        type: string
+                        format: uuid
+                      quantity:
+                        type: integer
+      responses:
+        '201':
+          description: Booking created with status PENDING
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+
+    get:
+      summary: List user bookings
+      tags: [Bookings]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of bookings for authenticated user
+        '401':
+          description: Unauthorized
+
+  /api/bookings/{id}:
+    get:
+      summary: Get booking details and current status
+      tags: [Bookings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Booking details
+        '404':
+          description: Booking not found
+
+  /api/bookings/{id}/cancel:
+    post:
+      summary: Cancel a booking (triggers refund saga)
+      tags: [Bookings]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Booking cancelled
+        '400':
+          description: Cannot cancel booking in current state
+
+  /api/payments/{bookingId}:
+    get:
+      summary: Get payment record for booking
+      tags: [Payments]
+      parameters:
+        - in: path
+          name: bookingId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Payment details
+        '404':
+          description: Payment record not found
+
+  /api/notifications:
+    get:
+      summary: Get notification log
+      tags: [Notifications]
+      responses:
+        '200':
+          description: List of sent notifications
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
