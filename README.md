@@ -120,15 +120,17 @@ make logs     # Follow live logs across all services
 
 | Component | Port | URL / Path |
 |---|---|---|
-| **API Gateway** | `8080` | `http://localhost:8080/` |
+| **API Gateway** | `8080` | `http://localhost:8080/` (Rate-limited, CORS, Correlation ID) |
 | **Frontend UI** | `3000` | `http://localhost:3000/` |
+| **Prometheus Server** | `9090` | `http://localhost:9090/` (Scrapes `/metrics` across services) |
+| **Grafana Dashboard** | `3100` | `http://localhost:3100/` (admin / admin, pre-provisioned) |
 | **Mailpit Web UI** | `8025` | `http://localhost:8025/` |
 | **RabbitMQ Management** | `15672` | `http://localhost:15672` (guest / guest) |
-| **Auth Service** | `3001` | `/api/auth` (via gateway) |
-| **Catalog Service** | `3002` | `/api/catalog` (via gateway) |
-| **Booking Service** | `3003` | `/api/bookings` (via gateway) |
-| **Payment Service** | `3004` | `/api/payments` (internal + read) |
-| **Notification Service** | `3005` | `/api/notifications` (internal + read) |
+| **Auth Service** | `3001` | `/api/auth` (via gateway), `/metrics` |
+| **Catalog Service** | `3002` | `/api/catalog` (via gateway), `/metrics` |
+| **Booking Service** | `3003` | `/api/bookings` (via gateway), `/metrics` |
+| **Payment Service** | `3004` | `/api/payments` (internal + read), `/metrics` |
+| **Notification Service** | `3005` | `/api/notifications` (internal + read), `/metrics` |
 
 ---
 

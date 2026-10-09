@@ -4,3 +4,5 @@ export * from './utils/response.js';
 export * from './middleware/authMiddleware.js';
 export * from './events/eventBus.js';
 export * from './events/idempotency.js';
+export * from './middleware/correlationMiddleware.js';
+export * from './middleware/metricsMiddleware.js';

@@ -3,13 +3,19 @@ import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
 import healthRoutes from './routes/healthRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { correlationMiddleware, createServiceMetrics } from '../../../shared/index.js';
 
 const app = express();
+const { middleware: metricsMiddleware, endpoint: metricsEndpoint } =
+  createServiceMetrics('auth-service');
 
 app.use(cors());
 app.use(express.json());
+app.use(correlationMiddleware);
+app.use(metricsMiddleware);
 
-// Routes
+// Observability & Routes
+app.get('/metrics', metricsEndpoint);
 app.use(healthRoutes);
 app.use('/api/auth', authRoutes);
 

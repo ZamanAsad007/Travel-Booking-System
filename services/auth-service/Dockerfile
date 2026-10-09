@@ -15,6 +15,7 @@ USER node
 COPY --chown=node:node services/auth-service/package*.json ./
 COPY --chown=node:node --from=dependencies /app/node_modules ./node_modules
 COPY --chown=node:node services/auth-service/src ./src
+COPY --chown=node:node shared /shared
 
 EXPOSE 3001
 
