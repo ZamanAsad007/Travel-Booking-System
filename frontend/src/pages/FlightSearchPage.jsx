@@ -1,17 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { catalogApi } from '../api/catalog.js';
 import { Plane, Search, Calendar, MapPin, ArrowRight, Clock, AlertCircle } from 'lucide-react';
+import { AIRPORTS } from '../constants/locations.js';
 
 export default function FlightSearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [from, setFrom] = useState(searchParams.get('from') || '');
-  const [to, setTo] = useState(searchParams.get('to') || '');
+  const [from, setFrom] = useState(searchParams.get('from')?.toUpperCase() || '');
+  const [to, setTo] = useState(searchParams.get('to')?.toUpperCase() || '');
   const [date, setDate] = useState(searchParams.get('date') || '');
 
+  useEffect(() => {
+    setFrom(searchParams.get('from')?.toUpperCase() || '');
+    setTo(searchParams.get('to')?.toUpperCase() || '');
+    setDate(searchParams.get('date') || '');
+  }, [searchParams]);
+
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['flights', searchParams.get('from'), searchParams.get('to'), searchParams.get('date')],
+    queryKey: [
+      'flights',
+      searchParams.get('from'),
+      searchParams.get('to'),
+      searchParams.get('date'),
+    ],
     queryFn: () =>
       catalogApi.searchFlights({
         from: searchParams.get('from') || undefined,
@@ -48,26 +60,28 @@ export default function FlightSearchPage() {
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">Origin (Airport / City)</label>
             <div style={{ position: 'relative' }}>
-              <input
-                type="text"
-                placeholder="e.g. JFK or New York"
-                className="form-input"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-              />
+              <select className="form-input" value={from} onChange={(e) => setFrom(e.target.value)}>
+                <option value="">All Origins</option>
+                {AIRPORTS.map((airport) => (
+                  <option key={airport.code} value={airport.code}>
+                    {airport.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">Destination</label>
             <div style={{ position: 'relative' }}>
-              <input
-                type="text"
-                placeholder="e.g. LHR or London"
-                className="form-input"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-              />
+              <select className="form-input" value={to} onChange={(e) => setTo(e.target.value)}>
+                <option value="">All Destinations</option>
+                {AIRPORTS.map((airport) => (
+                  <option key={airport.code} value={airport.code}>
+                    {airport.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -95,15 +109,22 @@ export default function FlightSearchPage() {
         </div>
       ) : error ? (
         <div className="card" style={{ background: 'var(--danger-bg)', borderColor: '#fca5a5' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}>
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}
+          >
             <AlertCircle size={20} />
             <strong>Failed to load flights: {error.message || 'Error occurred'}</strong>
           </div>
         </div>
       ) : flights.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-          <Plane size={48} style={{ color: 'var(--text-muted)', margin: '0 auto 1rem', opacity: 0.5 }} />
-          <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '0.5rem' }}>No flights found</h3>
+          <Plane
+            size={48}
+            style={{ color: 'var(--text-muted)', margin: '0 auto 1rem', opacity: 0.5 }}
+          />
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+            No flights found
+          </h3>
           <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
             Try adjusting your search criteria or clear filters to view all scheduled flights.
           </p>
@@ -122,27 +143,72 @@ export default function FlightSearchPage() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {flights.map((flight) => {
-            const availableSeats = flight.available_seats !== undefined ? flight.available_seats : (flight.seats_total - (flight.booked_seats || 0));
+            const availableSeats =
+              flight.available_seats !== undefined
+                ? flight.available_seats
+                : flight.seats_total - (flight.booked_seats || 0);
             const isSoldOut = availableSeats <= 0;
 
             return (
-              <div key={flight.id} className="card card-hover" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div
+                key={flight.id}
+                className="card card-hover"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '1rem',
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+                  <div
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: 'var(--primary-light)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--primary)',
+                    }}
+                  >
                     <Plane size={24} />
                   </div>
                   <div>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>
                       {flight.airline}
                     </h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.35rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                      <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{flight.origin}</span>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        marginTop: '0.35rem',
+                        color: 'var(--text-muted)',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+                        {flight.origin}
+                      </span>
                       <ArrowRight size={14} />
-                      <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{flight.destination}</span>
+                      <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+                        {flight.destination}
+                      </span>
                       <span>•</span>
                       <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                         <Clock size={14} />
-                        {new Date(flight.departs_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(flight.arrives_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(flight.departs_at).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}{' '}
+                        -{' '}
+                        {new Date(flight.arrives_at).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
                       </span>
                     </div>
                   </div>
@@ -153,7 +219,12 @@ export default function FlightSearchPage() {
                     <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
                       ${parseFloat(flight.price).toFixed(2)}
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: isSoldOut ? 'var(--danger)' : 'var(--text-muted)' }}>
+                    <div
+                      style={{
+                        fontSize: '0.8rem',
+                        color: isSoldOut ? 'var(--danger)' : 'var(--text-muted)',
+                      }}
+                    >
                       {isSoldOut ? 'Sold Out' : `${availableSeats} seats left`}
                     </div>
                   </div>
