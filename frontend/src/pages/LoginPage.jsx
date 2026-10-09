@@ -13,7 +13,9 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/';
+  const fromLocation = location.state?.from;
+  const fromPath = typeof fromLocation === 'string' ? fromLocation : fromLocation?.pathname || '/';
+  const fromState = fromLocation?.state;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,7 +24,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      navigate(from, { replace: true });
+      navigate(fromPath, { state: fromState, replace: true });
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
@@ -33,15 +35,41 @@ export default function LoginPage() {
   return (
     <div style={{ maxWidth: '440px', margin: '3rem auto' }}>
       <div className="card">
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', textAlign: 'center' }}>
+        <h2
+          style={{
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            marginBottom: '0.5rem',
+            textAlign: 'center',
+          }}
+        >
           Welcome Back
         </h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem', textAlign: 'center' }}>
+        <p
+          style={{
+            color: 'var(--text-muted)',
+            fontSize: '0.9rem',
+            marginBottom: '1.5rem',
+            textAlign: 'center',
+          }}
+        >
           Log in to manage your flights and hotel bookings
         </p>
 
         {error && (
-          <div style={{ background: 'var(--danger-bg)', color: 'var(--danger)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+          <div
+            style={{
+              background: 'var(--danger-bg)',
+              color: 'var(--danger)',
+              padding: '0.75rem',
+              borderRadius: 'var(--radius-sm)',
+              marginBottom: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.875rem',
+            }}
+          >
             <AlertCircle size={16} />
             <span>{error}</span>
           </div>
@@ -72,13 +100,25 @@ export default function LoginPage() {
             />
           </div>
 
-          <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }}>
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn btn-primary"
+            style={{ width: '100%', marginTop: '0.5rem' }}
+          >
             <LogIn size={16} />
             {loading ? 'Logging in...' : 'Sign In'}
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+        <p
+          style={{
+            textAlign: 'center',
+            marginTop: '1.5rem',
+            fontSize: '0.875rem',
+            color: 'var(--text-muted)',
+          }}
+        >
           Don't have an account?{' '}
           <Link to="/register" style={{ color: 'var(--primary)', fontWeight: 600 }}>
             Create an account

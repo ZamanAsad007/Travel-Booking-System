@@ -20,8 +20,17 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    const errorData = error.response?.data?.error || {
-      message: error.message || 'An unexpected network error occurred',
+    const backendError = error.response?.data?.error;
+    const errorData = {
+      message:
+        backendError?.message ||
+        error.response?.data?.message ||
+        error.message ||
+        'An unexpected error occurred',
+      code:
+        backendError?.code || (error.response?.status === 401 ? 'UNAUTHORIZED' : 'UNKNOWN_ERROR'),
+      details: backendError?.details || null,
+      status: error.response?.status,
     };
     return Promise.reject(errorData);
   }
