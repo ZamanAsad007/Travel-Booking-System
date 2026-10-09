@@ -17,7 +17,9 @@ export default function CheckoutPage() {
     return (
       <div className="card" style={{ maxWidth: '600px', margin: '3rem auto', textAlign: 'center' }}>
         <AlertCircle size={40} style={{ color: 'var(--warning)', margin: '0 auto 1rem' }} />
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '0.5rem' }}>No Item Selected</h2>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+          No Item Selected
+        </h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
           Please select a flight or hotel room before proceeding to checkout.
         </p>
@@ -28,7 +30,16 @@ export default function CheckoutPage() {
     );
   }
 
-  const { itemType, itemId, quantity = 1, unitPrice = 0, title, subtitle, checkIn, checkOut } = itemState;
+  const {
+    itemType,
+    itemId,
+    quantity = 1,
+    unitPrice = 0,
+    title,
+    subtitle,
+    checkIn,
+    checkOut,
+  } = itemState;
   const subtotal = (unitPrice * quantity).toFixed(2);
   const taxes = (unitPrice * quantity * 0.1).toFixed(2);
   const totalAmount = (parseFloat(subtotal) + parseFloat(taxes)).toFixed(2);
@@ -38,27 +49,42 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
+      const normalizedItemType = itemType?.toLowerCase().includes('hotel') ? 'hotel' : 'flight';
+
       const payload = {
         items: [
           {
-            itemType,
+            itemType: normalizedItemType,
             itemId,
-            quantity,
-            unitPrice,
-            dateFrom: checkIn || null,
-            dateTo: checkOut || null,
+            quantity: Number(quantity) || 1,
+            ...(checkIn ? { dateFrom: checkIn } : {}),
+            ...(checkOut ? { dateTo: checkOut } : {}),
           },
         ],
       };
 
       const res = await bookingApi.createBooking(payload);
-      const booking = res.data.booking;
+      const booking = res.data?.booking || res.data;
 
       // Navigate directly to booking status detail page
       navigate(`/bookings/${booking.id}`, { replace: true });
     } catch (err) {
       console.error('Checkout error:', err);
-      setError(err.message || 'Failed to place booking. Please try again.');
+
+      if (err.status === 401 || err.code === 'UNAUTHORIZED') {
+        setError('Your session has expired. Redirecting to login...');
+        setTimeout(() => {
+          navigate('/login', {
+            state: { from: { pathname: '/checkout', state: itemState } },
+          });
+        }, 1500);
+        return;
+      }
+
+      const validationDetails = err.details?.map((d) => d.message).join('. ');
+      const message =
+        validationDetails || err.message || 'Failed to place booking. Please try again.';
+      setError(message);
       setLoading(false);
     }
   };
@@ -79,8 +105,13 @@ export default function CheckoutPage() {
       </h1>
 
       {error && (
-        <div className="card" style={{ background: 'var(--danger-bg)', borderColor: '#fca5a5', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}>
+        <div
+          className="card"
+          style={{ background: 'var(--danger-bg)', borderColor: '#fca5a5', marginBottom: '1.5rem' }}
+        >
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}
+          >
             <AlertCircle size={20} />
             <strong>{error}</strong>
           </div>
@@ -91,14 +122,24 @@ export default function CheckoutPage() {
         {/* Left Column: Booking Item & Traveler Info */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="card">
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+            <h3
+              style={{
+                fontSize: '1.15rem',
+                fontWeight: 700,
+                marginBottom: '1rem',
+                borderBottom: '1px solid var(--border)',
+                paddingBottom: '0.5rem',
+              }}
+            >
               Item Details
             </h3>
             <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-main)' }}>
               {title}
             </div>
             {subtitle && (
-              <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+              <div
+                style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginTop: '0.25rem' }}
+              >
                 {subtitle}
               </div>
             )}
@@ -122,7 +163,15 @@ export default function CheckoutPage() {
           </div>
 
           <div className="card">
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+            <h3
+              style={{
+                fontSize: '1.15rem',
+                fontWeight: 700,
+                marginBottom: '1rem',
+                borderBottom: '1px solid var(--border)',
+                paddingBottom: '0.5rem',
+              }}
+            >
               Traveler Information
             </h3>
             <div className="form-group">
@@ -138,29 +187,78 @@ export default function CheckoutPage() {
 
         {/* Right Column: Price Summary & Payment Trigger */}
         <div className="card" style={{ position: 'sticky', top: '90px' }}>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+          <h3
+            style={{
+              fontSize: '1.15rem',
+              fontWeight: 700,
+              marginBottom: '1rem',
+              borderBottom: '1px solid var(--border)',
+              paddingBottom: '0.5rem',
+            }}
+          >
             Price Summary
           </h3>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: '0.5rem',
+              fontSize: '0.95rem',
+            }}
+          >
             <span style={{ color: 'var(--text-muted)' }}>Base Price ({quantity}x)</span>
             <span>${subtotal}</span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: '0.5rem',
+              fontSize: '0.95rem',
+            }}
+          >
             <span style={{ color: 'var(--text-muted)' }}>Taxes & Regulatory Fees (10%)</span>
             <span>${taxes}</span>
           </div>
 
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div
+            style={{
+              borderTop: '1px solid var(--border)',
+              paddingTop: '1rem',
+              marginTop: '1rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
             <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>Total</span>
             <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)' }}>
               ${totalAmount}
             </span>
           </div>
 
-          <div style={{ background: '#f8fafc', padding: '0.85rem', borderRadius: 'var(--radius-sm)', margin: '1.25rem 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+          <div
+            style={{
+              background: '#f8fafc',
+              padding: '0.85rem',
+              borderRadius: 'var(--radius-sm)',
+              margin: '1.25rem 0',
+              fontSize: '0.8rem',
+              color: 'var(--text-muted)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontWeight: 600,
+                color: 'var(--text-main)',
+                marginBottom: '0.25rem',
+              }}
+            >
               <CreditCard size={15} />
               <span>Simulated Payment Gateway</span>
             </div>

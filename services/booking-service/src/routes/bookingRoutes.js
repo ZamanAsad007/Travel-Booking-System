@@ -6,12 +6,28 @@ import { validate } from '../middleware/validate.js';
 
 const router = Router();
 
+const normalizeItemType = (val) => {
+  if (typeof val !== 'string') return val;
+  const lower = val.toLowerCase().trim();
+  if (lower === 'flight' || lower === 'flights') return 'flight';
+  if (
+    lower === 'hotel' ||
+    lower === 'hotels' ||
+    lower === 'hotel_room' ||
+    lower === 'hotel-room' ||
+    lower === 'room'
+  ) {
+    return 'hotel';
+  }
+  return lower;
+};
+
 const bookingItemSchema = z.object({
-  itemType: z.enum(['flight', 'hotel']),
+  itemType: z.preprocess(normalizeItemType, z.enum(['flight', 'hotel'])),
   itemId: z.string().uuid('Invalid item UUID'),
   quantity: z.number().int().positive().default(1),
-  dateFrom: z.string().optional(),
-  dateTo: z.string().optional(),
+  dateFrom: z.string().nullable().optional(),
+  dateTo: z.string().nullable().optional(),
 });
 
 const createBookingSchema = z.object({

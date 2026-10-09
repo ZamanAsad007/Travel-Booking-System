@@ -21,21 +21,28 @@ export default function FlightDetailPage() {
   const handleProceed = () => {
     if (!flight) return;
 
+    const checkoutState = {
+      itemType: 'flight',
+      itemId: flight.id,
+      quantity,
+      unitPrice: parseFloat(flight.price),
+      title: `${flight.airline} Flight (${flight.origin} → ${flight.destination})`,
+      subtitle: `Departure: ${new Date(flight.departs_at).toLocaleString()}`,
+    };
+
     if (!isAuthenticated) {
-      navigate('/login', { state: { from: { pathname: `/flights/${id}` } } });
+      navigate('/login', {
+        state: {
+          from: {
+            pathname: '/checkout',
+            state: checkoutState,
+          },
+        },
+      });
       return;
     }
 
-    navigate('/checkout', {
-      state: {
-        itemType: 'FLIGHT',
-        itemId: flight.id,
-        quantity,
-        unitPrice: parseFloat(flight.price),
-        title: `${flight.airline} Flight (${flight.origin} → ${flight.destination})`,
-        subtitle: `Departure: ${new Date(flight.departs_at).toLocaleString()}`,
-      },
-    });
+    navigate('/checkout', { state: checkoutState });
   };
 
   if (isLoading) {
@@ -49,7 +56,9 @@ export default function FlightDetailPage() {
   if (error || !flight) {
     return (
       <div className="card" style={{ background: 'var(--danger-bg)', borderColor: '#fca5a5' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}
+        >
           <AlertCircle size={20} />
           <strong>Flight not found or failed to load</strong>
         </div>
@@ -57,16 +66,35 @@ export default function FlightDetailPage() {
     );
   }
 
-  const availableSeats = flight.available_seats !== undefined ? flight.available_seats : (flight.seats_total - (flight.booked_seats || 0));
+  const availableSeats =
+    flight.available_seats !== undefined
+      ? flight.available_seats
+      : flight.seats_total - (flight.booked_seats || 0);
   const isSoldOut = availableSeats <= 0;
   const totalPrice = (parseFloat(flight.price) * quantity).toFixed(2);
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid var(--border)',
+            paddingBottom: '1rem',
+            marginBottom: '1.5rem',
+          }}
+        >
           <div>
-            <span style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 700, textTransform: 'uppercase' }}>
+            <span
+              style={{
+                fontSize: '0.85rem',
+                color: 'var(--primary)',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+              }}
+            >
               Flight Overview
             </span>
             <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0.25rem 0' }}>
@@ -82,39 +110,86 @@ export default function FlightDetailPage() {
         </div>
 
         {/* Flight Route Visual */}
-        <div style={{ background: 'var(--primary-light)', padding: '1.5rem', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div
+          style={{
+            background: 'var(--primary-light)',
+            padding: '1.5rem',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1.5rem',
+          }}
+        >
           <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>{flight.origin}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
+              {flight.origin}
+            </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Departure</div>
             <div style={{ fontWeight: 600, marginTop: '0.25rem' }}>
-              {new Date(flight.departs_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {new Date(flight.departs_at).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              {new Date(flight.departs_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+              {new Date(flight.departs_at).toLocaleDateString([], {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.25rem',
+            }}
+          >
             <Plane size={24} style={{ color: 'var(--primary)' }} />
-            <div style={{ width: '120px', height: '2px', background: 'var(--primary)', opacity: 0.5 }} />
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Direct Flight</span>
+            <div
+              style={{ width: '120px', height: '2px', background: 'var(--primary)', opacity: 0.5 }}
+            />
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+              Direct Flight
+            </span>
           </div>
 
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>{flight.destination}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
+              {flight.destination}
+            </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Arrival</div>
             <div style={{ fontWeight: 600, marginTop: '0.25rem' }}>
-              {new Date(flight.arrives_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {new Date(flight.arrives_at).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              {new Date(flight.arrives_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+              {new Date(flight.arrives_at).toLocaleDateString([], {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
             </div>
           </div>
         </div>
 
         {/* Seat Selection & Booking Box */}
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '1rem',
+            }}
+          >
             <div>
               <label className="form-label">Number of Passengers / Seats</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -131,7 +206,12 @@ export default function FlightDetailPage() {
                     </option>
                   ))}
                 </select>
-                <span style={{ fontSize: '0.85rem', color: isSoldOut ? 'var(--danger)' : 'var(--text-muted)' }}>
+                <span
+                  style={{
+                    fontSize: '0.85rem',
+                    color: isSoldOut ? 'var(--danger)' : 'var(--text-muted)',
+                  }}
+                >
                   {isSoldOut ? 'Sold Out' : `${availableSeats} seats currently available`}
                 </span>
               </div>
@@ -139,7 +219,14 @@ export default function FlightDetailPage() {
 
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Total Amount</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+              <div
+                style={{
+                  fontSize: '1.75rem',
+                  fontWeight: 800,
+                  color: 'var(--text-main)',
+                  marginBottom: '0.5rem',
+                }}
+              >
                 ${totalPrice}
               </div>
               <button
@@ -156,10 +243,14 @@ export default function FlightDetailPage() {
         </div>
       </div>
 
-      <div className="card" style={{ background: '#f8fafc', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <div
+        className="card"
+        style={{ background: '#f8fafc', display: 'flex', alignItems: 'center', gap: '0.75rem' }}
+      >
         <ShieldCheck size={24} style={{ color: 'var(--success)' }} />
         <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-          <strong>Inventory Lock Guarantee:</strong> Seats are held in Redis with a temporary hold as soon as checkout starts to prevent double booking.
+          <strong>Inventory Lock Guarantee:</strong> Seats are held in Redis with a temporary hold
+          as soon as checkout starts to prevent double booking.
         </div>
       </div>
     </div>
