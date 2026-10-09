@@ -3,7 +3,8 @@ dotenv.config();
 
 export const config = {
   port: parseInt(process.env.BOOKING_SERVICE_PORT || '3003', 10),
-  jwtSecret: process.env.JWT_SECRET || 'travel_booking_super_secret_jwt_key_2026_change_in_production',
+  jwtSecret:
+    process.env.JWT_SECRET || 'travel_booking_super_secret_jwt_key_2026_change_in_production',
   catalogServiceUrl: process.env.CATALOG_SERVICE_URL || 'http://catalog-service:3002',
   rabbitmqUrl: process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672',
   db: {

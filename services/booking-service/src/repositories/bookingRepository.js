@@ -76,10 +76,7 @@ export const bookingRepository = {
   },
 
   async findById(id) {
-    const bookingRes = await query(
-      `SELECT * FROM bookings WHERE id = $1 LIMIT 1`,
-      [id]
-    );
+    const bookingRes = await query(`SELECT * FROM bookings WHERE id = $1 LIMIT 1`, [id]);
     const booking = bookingRes.rows[0];
     if (!booking) return null;
 

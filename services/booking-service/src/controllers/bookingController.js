@@ -34,7 +34,11 @@ export const bookingController = {
 
   async getById(req, res, next) {
     try {
-      const booking = await bookingService.getBookingById(req.params.id, req.user.id, req.user.role);
+      const booking = await bookingService.getBookingById(
+        req.params.id,
+        req.user.id,
+        req.user.role
+      );
       res.status(200).json({
         success: true,
         data: { booking },

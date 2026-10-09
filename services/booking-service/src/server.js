@@ -11,7 +11,9 @@ async function waitForDb(retries = 10, delay = 2000) {
       console.log('[booking-service] Connected to PostgreSQL database.');
       return;
     } catch (err) {
-      console.log(`[booking-service] Database connection attempt ${i + 1}/${retries} failed: ${err.message}. Retrying in ${delay / 1000}s...`);
+      console.log(
+        `[booking-service] Database connection attempt ${i + 1}/${retries} failed: ${err.message}. Retrying in ${delay / 1000}s...`
+      );
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }

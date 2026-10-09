@@ -114,7 +114,9 @@ export const notificationService = {
       errorMessage,
     });
 
-    console.log(`[notification-service] Notification record created with ID: ${record.id} (Status: ${status})`);
+    console.log(
+      `[notification-service] Notification record created with ID: ${record.id} (Status: ${status})`
+    );
     return record;
   },
 };

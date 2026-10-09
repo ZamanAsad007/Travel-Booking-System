@@ -18,7 +18,7 @@ export async function seedCatalogData() {
           destination: 'LHR',
           departsAt: '2026-11-01T18:30:00Z',
           arrivesAt: '2026-11-02T06:30:00Z',
-          price: 550.00,
+          price: 550.0,
           seatsTotal: 180,
         },
         {
@@ -28,7 +28,7 @@ export async function seedCatalogData() {
           destination: 'LHR',
           departsAt: '2026-11-01T21:00:00Z',
           arrivesAt: '2026-11-02T09:00:00Z',
-          price: 620.00,
+          price: 620.0,
           seatsTotal: 220,
         },
         {
@@ -38,7 +38,7 @@ export async function seedCatalogData() {
           destination: 'DXB',
           departsAt: '2026-11-05T23:00:00Z',
           arrivesAt: '2026-11-06T19:45:00Z',
-          price: 920.00,
+          price: 920.0,
           seatsTotal: 300,
         },
         {
@@ -48,7 +48,7 @@ export async function seedCatalogData() {
           destination: 'HND',
           departsAt: '2026-11-10T11:50:00Z',
           arrivesAt: '2026-11-11T16:20:00Z',
-          price: 880.00,
+          price: 880.0,
           seatsTotal: 215,
         },
         {
@@ -58,7 +58,7 @@ export async function seedCatalogData() {
           destination: 'CDG',
           departsAt: '2026-11-12T16:30:00Z',
           arrivesAt: '2026-11-13T05:50:00Z',
-          price: 710.00,
+          price: 710.0,
           seatsTotal: 250,
         },
         {
@@ -68,7 +68,7 @@ export async function seedCatalogData() {
           destination: 'SIN',
           departsAt: '2026-11-15T11:40:00Z',
           arrivesAt: '2026-11-16T06:50:00Z',
-          price: 850.00,
+          price: 850.0,
           seatsTotal: 260,
         },
       ];
@@ -78,7 +78,16 @@ export async function seedCatalogData() {
           `INSERT INTO flights (flight_number, airline, origin, destination, departs_at, arrives_at, price, seats_total)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            ON CONFLICT (flight_number) DO NOTHING`,
-          [f.flightNumber, f.airline, f.origin, f.destination, f.departsAt, f.arrivesAt, f.price, f.seatsTotal]
+          [
+            f.flightNumber,
+            f.airline,
+            f.origin,
+            f.destination,
+            f.departsAt,
+            f.arrivesAt,
+            f.price,
+            f.seatsTotal,
+          ]
         );
       }
     }
@@ -93,10 +102,11 @@ export async function seedCatalogData() {
           city: 'London',
           address: 'Strand, London WC2R 0EZ, United Kingdom',
           rating: 4.8,
-          imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
+          imageUrl:
+            'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
           rooms: [
-            { type: 'Superior Queen Room', pricePerNight: 350.00, roomsTotal: 25 },
-            { type: 'River View Deluxe Suite', pricePerNight: 650.00, roomsTotal: 10 },
+            { type: 'Superior Queen Room', pricePerNight: 350.0, roomsTotal: 25 },
+            { type: 'River View Deluxe Suite', pricePerNight: 650.0, roomsTotal: 10 },
           ],
         },
         {
@@ -104,10 +114,11 @@ export async function seedCatalogData() {
           city: 'Tokyo',
           address: '3-7-1-2 Nishi-Shinjuku, Shinjuku-ku, Tokyo 163-1055, Japan',
           rating: 4.9,
-          imageUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
+          imageUrl:
+            'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
           rooms: [
-            { type: 'Park King Room', pricePerNight: 420.00, roomsTotal: 30 },
-            { type: 'Tokyo Diplomat Suite', pricePerNight: 890.00, roomsTotal: 8 },
+            { type: 'Park King Room', pricePerNight: 420.0, roomsTotal: 30 },
+            { type: 'Tokyo Diplomat Suite', pricePerNight: 890.0, roomsTotal: 8 },
           ],
         },
         {
@@ -115,10 +126,11 @@ export async function seedCatalogData() {
           city: 'New York',
           address: '768 5th Ave, New York, NY 10019, United States',
           rating: 4.7,
-          imageUrl: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80',
+          imageUrl:
+            'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80',
           rooms: [
-            { type: 'Plaza King Room', pricePerNight: 550.00, roomsTotal: 40 },
-            { type: 'Edwardian Suite', pricePerNight: 950.00, roomsTotal: 12 },
+            { type: 'Plaza King Room', pricePerNight: 550.0, roomsTotal: 40 },
+            { type: 'Edwardian Suite', pricePerNight: 950.0, roomsTotal: 12 },
           ],
         },
         {
@@ -126,10 +138,11 @@ export async function seedCatalogData() {
           city: 'Paris',
           address: '25 Avenue Montaigne, 75008 Paris, France',
           rating: 4.9,
-          imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80',
+          imageUrl:
+            'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80',
           rooms: [
-            { type: 'Deluxe Room Eiffel View', pricePerNight: 620.00, roomsTotal: 20 },
-            { type: 'Prestige Suite', pricePerNight: 1100.00, roomsTotal: 5 },
+            { type: 'Deluxe Room Eiffel View', pricePerNight: 620.0, roomsTotal: 20 },
+            { type: 'Prestige Suite', pricePerNight: 1100.0, roomsTotal: 5 },
           ],
         },
       ];

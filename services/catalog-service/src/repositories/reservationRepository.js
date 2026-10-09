@@ -11,7 +11,15 @@ export const reservationRepository = {
     return res.rows[0].total;
   },
 
-  async createReservation({ itemType, itemId, bookingId, quantity = 1, dateFrom = null, dateTo = null, status = 'CONFIRMED' }) {
+  async createReservation({
+    itemType,
+    itemId,
+    bookingId,
+    quantity = 1,
+    dateFrom = null,
+    dateTo = null,
+    status = 'CONFIRMED',
+  }) {
     const res = await query(
       `INSERT INTO reservations (item_type, item_id, booking_id, quantity, date_from, date_to, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7)

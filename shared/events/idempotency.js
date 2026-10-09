@@ -24,7 +24,9 @@ export function withIdempotency(pool, handler) {
 
     const alreadyProcessed = await isEventProcessed(pool, event.eventId);
     if (alreadyProcessed) {
-      console.log(`[Idempotency] Skipping already processed event: ${event.eventId} (${event.type})`);
+      console.log(
+        `[Idempotency] Skipping already processed event: ${event.eventId} (${event.type})`
+      );
       return;
     }
 

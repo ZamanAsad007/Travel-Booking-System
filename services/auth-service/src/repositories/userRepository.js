@@ -2,7 +2,9 @@ import { query } from '../config/db.js';
 
 export const userRepository = {
   async findByEmail(email) {
-    const res = await query('SELECT * FROM users WHERE email = $1 LIMIT 1', [email.toLowerCase().trim()]);
+    const res = await query('SELECT * FROM users WHERE email = $1 LIMIT 1', [
+      email.toLowerCase().trim(),
+    ]);
     return res.rows[0] || null;
   },
 

@@ -21,7 +21,9 @@ class EventBus {
     this.isConnecting = true;
     for (let i = 0; i < retries; i++) {
       try {
-        console.log(`[EventBus] Connecting to RabbitMQ at ${this.url} (attempt ${i + 1}/${retries})...`);
+        console.log(
+          `[EventBus] Connecting to RabbitMQ at ${this.url} (attempt ${i + 1}/${retries})...`
+        );
         this.connection = await amqplib.connect(this.url);
         this.channel = await this.connection.createChannel();
         await this.channel.assertExchange(this.exchange, 'topic', { durable: true });
@@ -38,11 +40,16 @@ class EventBus {
           this.connection = null;
         });
 
-        console.log('[EventBus] Successfully connected to RabbitMQ and asserted exchange:', this.exchange);
+        console.log(
+          '[EventBus] Successfully connected to RabbitMQ and asserted exchange:',
+          this.exchange
+        );
         this.isConnecting = false;
         return this.channel;
       } catch (err) {
-        console.warn(`[EventBus] Connection attempt ${i + 1} failed: ${err.message}. Retrying in ${delay / 1000}s...`);
+        console.warn(
+          `[EventBus] Connection attempt ${i + 1} failed: ${err.message}. Retrying in ${delay / 1000}s...`
+        );
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
@@ -105,7 +112,9 @@ class EventBus {
       try {
         const content = msg.content.toString();
         const event = JSON.parse(content);
-        console.log(`[EventBus] Consumed event: ${event.type} from queue '${queueName}' (id: ${event.eventId})`);
+        console.log(
+          `[EventBus] Consumed event: ${event.type} from queue '${queueName}' (id: ${event.eventId})`
+        );
 
         await handler(event);
         channel.ack(msg);
