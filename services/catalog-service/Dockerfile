@@ -16,6 +16,7 @@ COPY --chown=node:node services/catalog-service/package*.json ./
 COPY --chown=node:node --from=dependencies /app/node_modules ./node_modules
 COPY --chown=node:node services/catalog-service/src ./src
 COPY --chown=node:node shared /shared
+RUN ln -s /app/node_modules /shared/node_modules
 
 EXPOSE 3002
 

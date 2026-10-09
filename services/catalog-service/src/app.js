@@ -3,7 +3,8 @@ import cors from 'cors';
 import catalogRoutes from './routes/catalogRoutes.js';
 import healthRoutes from './routes/healthRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import { correlationMiddleware, createServiceMetrics } from '../../../shared/index.js';
+import { correlationMiddleware } from '../../../shared/middleware/correlationMiddleware.js';
+import { createServiceMetrics } from '../../../shared/middleware/metricsMiddleware.js';
 
 const app = express();
 const { middleware: metricsMiddleware, endpoint: metricsEndpoint } =

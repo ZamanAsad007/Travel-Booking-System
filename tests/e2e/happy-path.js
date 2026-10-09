@@ -99,10 +99,9 @@ async function runE2E() {
     }
 
     const bookingJson = await bookingRes.json();
-    const bookingId = bookingJson.data?.id;
-    console.log(
-      `  ✓ Booking created! ID: ${bookingId}, Initial status: ${bookingJson.data?.status}`
-    );
+    const booking = bookingJson.data?.booking || bookingJson.data;
+    const bookingId = booking?.id;
+    console.log(`  ✓ Booking created! ID: ${bookingId}, Initial status: ${booking?.status}`);
 
     // Step 4: Poll for Booking Confirmation (Saga Choreography)
     console.log(
@@ -110,7 +109,7 @@ async function runE2E() {
     );
     const maxRetries = 15;
     let attempts = 0;
-    let finalStatus = bookingJson.data?.status;
+    let finalStatus = booking?.status;
 
     while (attempts < maxRetries) {
       attempts++;
@@ -125,7 +124,8 @@ async function runE2E() {
       }
 
       const statusJson = await statusRes.json();
-      finalStatus = statusJson.data?.status;
+      const currentBooking = statusJson.data?.booking || statusJson.data;
+      finalStatus = currentBooking?.status;
       console.log(`  Attempt ${attempts}/${maxRetries} - Status: ${finalStatus}`);
 
       if (finalStatus === 'CONFIRMED') {

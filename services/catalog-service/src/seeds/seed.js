@@ -177,8 +177,13 @@ export async function seedCatalogData() {
   }
 }
 
-if (process.argv[1] === import.meta.url) {
+import { fileURLToPath } from 'node:url';
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   seedCatalogData()
     .then(() => process.exit(0))
-    .catch(() => process.exit(1));
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
 }
