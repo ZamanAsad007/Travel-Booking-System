@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "5432:5432"
+      - "${HOST_POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init-dbs.sql:/docker-entrypoint-initdb.d/init-dbs.sql:ro
@@ -42,7 +42,7 @@ services:
     container_name: travel_redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "${HOST_REDIS_PORT:-6380}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
