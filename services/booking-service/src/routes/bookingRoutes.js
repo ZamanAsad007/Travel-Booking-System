@@ -30,8 +30,16 @@ const bookingItemSchema = z.object({
   dateTo: z.string().nullable().optional(),
 });
 
+const travelerSchema = z.object({
+  full_name: z.string().min(1, 'Traveler full name is required'),
+  passport_no: z.string().min(1, 'Passport number is required'),
+  date_of_birth: z.string().min(1, 'Date of birth is required'),
+  seat_no: z.string().optional().nullable(),
+});
+
 const createBookingSchema = z.object({
   items: z.array(bookingItemSchema).min(1, 'At least one item is required in the booking'),
+  travelers: z.array(travelerSchema).min(1, 'At least one traveler is required').optional(),
 });
 
 // All booking endpoints require authentication
@@ -43,6 +51,8 @@ router.get('/admin/stats', requireRole('ADMIN'), bookingController.getStats);
 
 router.post('/', validate(createBookingSchema), bookingController.create);
 router.get('/', bookingController.list);
+router.get('/:id/ticket/download', bookingController.downloadTicketPdf);
+router.get('/:id/ticket', bookingController.getTicket);
 router.get('/:id', bookingController.getById);
 router.post('/:id/cancel', bookingController.cancel);
 

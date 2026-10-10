@@ -6,7 +6,12 @@ import { EVENTS } from '../../../../shared/constants/events.js';
 
 export async function startNotificationConsumer() {
   const queueName = 'notification-service.events';
-  const routingKeys = [EVENTS.BOOKING_CONFIRMED, EVENTS.BOOKING_CANCELLED, EVENTS.PAYMENT_REFUNDED];
+  const routingKeys = [
+    EVENTS.BOOKING_CONFIRMED,
+    EVENTS.BOOKING_CANCELLED,
+    EVENTS.PAYMENT_REFUNDED,
+    EVENTS.BOOKING_TICKET_ISSUED,
+  ];
 
   const handleEvent = async (event) => {
     const { type, data } = event;

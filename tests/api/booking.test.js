@@ -93,5 +93,25 @@ describe('Booking Service API Tests', () => {
       expect(res.body.data.totalBookings).toBe(10);
       expect(res.body.data.totalRevenue).toBe(5000);
     });
+
+    test('should reject booking creation with invalid traveler details', async () => {
+      const jwt = (await import('jsonwebtoken')).default;
+      const userToken = jwt.sign(
+        { id: 'u1', role: 'USER' },
+        process.env.JWT_SECRET || 'travel_booking_super_secret_jwt_key_2026_change_in_production'
+      );
+      const res = await request(app)
+        .post('/api/bookings')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          items: [
+            { itemType: 'flight', itemId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', quantity: 1 },
+          ],
+          travelers: [{ full_name: '', passport_no: '', date_of_birth: '' }],
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
   });
 });

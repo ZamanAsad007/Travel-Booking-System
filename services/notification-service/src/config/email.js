@@ -32,7 +32,7 @@ export async function verifySmtp() {
   }
 }
 
-export async function sendEmail({ to, subject, html, text }) {
+export async function sendEmail({ to, subject, html, text, attachments = [] }) {
   try {
     const info = await transporter.sendMail({
       from: config.smtp.from,
@@ -40,6 +40,7 @@ export async function sendEmail({ to, subject, html, text }) {
       subject,
       text,
       html,
+      attachments,
     });
     console.log(
       `[notification-service] Email sent to ${to}: ${subject} (messageId: ${info.messageId})`

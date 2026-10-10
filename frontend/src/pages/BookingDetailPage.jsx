@@ -14,6 +14,9 @@ import {
   CreditCard,
   RefreshCw,
   Ban,
+  Download,
+  Ticket,
+  Users,
 } from 'lucide-react';
 
 export default function BookingDetailPage() {
@@ -21,6 +24,8 @@ export default function BookingDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [cancelError, setCancelError] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
 
   // Auto-poll every 2.5 seconds while status is PENDING!
   const { data, isLoading, error } = useQuery({
@@ -49,6 +54,18 @@ export default function BookingDetailPage() {
     if (window.confirm('Are you sure you want to cancel this booking? This will release reserved inventory and trigger a refund.')) {
       setCancelError('');
       cancelMutation.mutate();
+    }
+  };
+
+  const handleDownloadTicket = async () => {
+    setIsDownloading(true);
+    setDownloadError('');
+    try {
+      await bookingApi.downloadTicket(booking.id, booking.ticket_number || booking.id);
+    } catch (err) {
+      setDownloadError(err.message || 'Failed to download e-ticket');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -157,12 +174,39 @@ export default function BookingDetailPage() {
 
         {/* Status Callout Banner */}
         {isConfirmed && (
-          <div style={{ background: 'var(--success-bg)', border: '1px solid #86efac', borderRadius: 'var(--radius-sm)', padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', color: '#166534' }}>
-            <CheckCircle2 size={24} />
-            <div>
-              <div style={{ fontWeight: 700 }}>Booking Confirmed!</div>
-              <div style={{ fontSize: '0.875rem' }}>Your tickets and room reservations are locked in. Check Mailpit (port 8025) for your confirmation email.</div>
+          <div style={{ background: 'var(--success-bg)', border: '1px solid #86efac', borderRadius: 'var(--radius-sm)', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', color: '#166534' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <CheckCircle2 size={24} />
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '1rem' }}>Booking Confirmed!</div>
+                <div style={{ fontSize: '0.875rem' }}>
+                  {booking.ticket_number ? (
+                    <span>
+                      E-Ticket Number: <strong style={{ letterSpacing: '0.05em', color: '#14532d' }}>{booking.ticket_number}</strong>
+                    </span>
+                  ) : (
+                    'Your tickets and room reservations are locked in. Check Mailpit (port 8025) for your confirmation email.'
+                  )}
+                </div>
+              </div>
             </div>
+            {booking.ticket_number && (
+              <button
+                onClick={handleDownloadTicket}
+                disabled={isDownloading}
+                className="btn btn-primary"
+                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', backgroundColor: '#15803d', borderColor: '#166534' }}
+              >
+                <Download size={16} />
+                {isDownloading ? 'Generating PDF...' : 'Download E-Ticket (PDF)'}
+              </button>
+            )}
+          </div>
+        )}
+
+        {downloadError && (
+          <div style={{ background: 'var(--danger-bg)', color: 'var(--danger)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', fontSize: '0.875rem' }}>
+            {downloadError}
           </div>
         )}
 
@@ -172,6 +216,36 @@ export default function BookingDetailPage() {
             <div>
               <div style={{ fontWeight: 700 }}>Booking Cancelled</div>
               <div style={{ fontSize: '0.875rem' }}>The booking was cancelled and inventory holds have been released back to catalog.</div>
+            </div>
+          </div>
+        )}
+
+        {/* Travelers Section */}
+        {booking.travelers && booking.travelers.length > 0 && (
+          <div style={{ marginBottom: '1.75rem' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Users size={18} />
+              Travelers ({booking.travelers.length})
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '0.75rem' }}>
+              {booking.travelers.map((t, idx) => (
+                <div key={t.id || idx} style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '0.85rem', background: '#fafafa' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
+                    {idx + 1}. {t.full_name || t.fullName}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>
+                    Passport / ID: <strong>{t.passport_no || t.passportNo}</strong>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    DOB: {t.date_of_birth ? new Date(t.date_of_birth).toLocaleDateString() : 'N/A'}
+                  </div>
+                  {(t.seat_no || t.seatNo) && (
+                    <div style={{ fontSize: '0.8rem', color: 'var(--primary)', marginTop: '0.35rem', fontWeight: 600 }}>
+                      Seat: {t.seat_no || t.seatNo}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}

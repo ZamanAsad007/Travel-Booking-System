@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { bookingApi } from '../api/bookings.js';
-import { ShieldCheck, CreditCard, AlertCircle, ArrowLeft, Check } from 'lucide-react';
+import { ShieldCheck, CreditCard, AlertCircle, ArrowLeft, Check, Plus, Trash2, Users } from 'lucide-react';
 
 export default function CheckoutPage() {
   const location = useLocation();
@@ -12,6 +12,15 @@ export default function CheckoutPage() {
   const itemState = location.state;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const [travelers, setTravelers] = useState([
+    {
+      full_name: user?.name || '',
+      passport_no: '',
+      date_of_birth: '',
+      seat_no: '',
+    },
+  ]);
 
   if (!itemState) {
     return (
@@ -33,19 +42,56 @@ export default function CheckoutPage() {
   const {
     itemType,
     itemId,
-    quantity = 1,
     unitPrice = 0,
     title,
     subtitle,
     checkIn,
     checkOut,
   } = itemState;
-  const subtotal = (unitPrice * quantity).toFixed(2);
-  const taxes = (unitPrice * quantity * 0.1).toFixed(2);
+
+  const travelerCount = travelers.length;
+  const subtotal = (unitPrice * travelerCount).toFixed(2);
+  const taxes = (unitPrice * travelerCount * 0.1).toFixed(2);
   const totalAmount = (parseFloat(subtotal) + parseFloat(taxes)).toFixed(2);
+
+  const handleAddTraveler = () => {
+    setTravelers([
+      ...travelers,
+      { full_name: '', passport_no: '', date_of_birth: '', seat_no: '' },
+    ]);
+  };
+
+  const handleRemoveTraveler = (index) => {
+    if (travelers.length <= 1) return;
+    setTravelers(travelers.filter((_, i) => i !== index));
+  };
+
+  const handleTravelerChange = (index, field, value) => {
+    const updated = [...travelers];
+    updated[index] = { ...updated[index], [field]: value };
+    setTravelers(updated);
+  };
 
   const handleConfirmBooking = async () => {
     setError('');
+
+    // Validate travelers
+    for (let i = 0; i < travelers.length; i++) {
+      const t = travelers[i];
+      if (!t.full_name.trim()) {
+        setError(`Traveler #${i + 1} full name is required`);
+        return;
+      }
+      if (!t.passport_no.trim()) {
+        setError(`Traveler #${i + 1} passport number is required`);
+        return;
+      }
+      if (!t.date_of_birth) {
+        setError(`Traveler #${i + 1} date of birth is required`);
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -56,11 +102,17 @@ export default function CheckoutPage() {
           {
             itemType: normalizedItemType,
             itemId,
-            quantity: Number(quantity) || 1,
+            quantity: travelerCount,
             ...(checkIn ? { dateFrom: checkIn } : {}),
             ...(checkOut ? { dateTo: checkOut } : {}),
           },
         ],
+        travelers: travelers.map((t) => ({
+          full_name: t.full_name.trim(),
+          passport_no: t.passport_no.trim().toUpperCase(),
+          date_of_birth: t.date_of_birth,
+          seat_no: t.seat_no ? t.seat_no.trim().toUpperCase() : null,
+        })),
       };
 
       const res = await bookingApi.createBooking(payload);
@@ -150,8 +202,8 @@ export default function CheckoutPage() {
                 <strong>{itemType}</strong>
               </div>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Quantity: </span>
-                <strong>{quantity}</strong>
+                <span style={{ color: 'var(--text-muted)' }}>Travelers: </span>
+                <strong>{travelerCount} passenger(s)</strong>
               </div>
             </div>
 
@@ -163,25 +215,89 @@ export default function CheckoutPage() {
           </div>
 
           <div className="card">
-            <h3
-              style={{
-                fontSize: '1.15rem',
-                fontWeight: 700,
-                marginBottom: '1rem',
-                borderBottom: '1px solid var(--border)',
-                paddingBottom: '0.5rem',
-              }}
-            >
-              Traveler Information
-            </h3>
-            <div className="form-group">
-              <label className="form-label">Full Name</label>
-              <input type="text" className="form-input" disabled value={user?.name || ''} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Users size={18} /> Traveler Information
+              </h3>
+              <button
+                type="button"
+                onClick={handleAddTraveler}
+                className="btn btn-secondary"
+                style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+              >
+                <Plus size={14} /> Add Passenger
+              </button>
             </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Email (for confirmation)</label>
-              <input type="email" className="form-input" disabled value={user?.email || ''} />
-            </div>
+
+            {travelers.map((traveler, index) => (
+              <div
+                key={index}
+                style={{
+                  padding: '1rem',
+                  background: '#f9fafb',
+                  borderRadius: '8px',
+                  marginBottom: index < travelers.length - 1 ? '1rem' : 0,
+                  border: '1px solid #e5e7eb',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#1e3a8a' }}>
+                    Passenger #{index + 1}
+                  </span>
+                  {travelers.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTraveler(index)}
+                      style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.8rem' }}
+                    >
+                      <Trash2 size={14} /> Remove
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Full Name *</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. John Doe"
+                      value={traveler.full_name}
+                      onChange={(e) => handleTravelerChange(index, 'full_name', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Passport / National ID *</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. A12345678"
+                      value={traveler.passport_no}
+                      onChange={(e) => handleTravelerChange(index, 'passport_no', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Date of Birth *</label>
+                    <input
+                      type="date"
+                      className="form-input"
+                      value={traveler.date_of_birth}
+                      onChange={(e) => handleTravelerChange(index, 'date_of_birth', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.8rem' }}>Seat Preference</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. 14A or Window"
+                      value={traveler.seat_no}
+                      onChange={(e) => handleTravelerChange(index, 'seat_no', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

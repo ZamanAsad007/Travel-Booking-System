@@ -23,15 +23,32 @@ export async function startBookingConsumer() {
     if (type === EVENTS.PAYMENT_SUCCEEDED) {
       // Transition from PENDING to CONFIRMED
       if (BookingStateMachine.canTransition(booking.status, BookingStatus.CONFIRMED)) {
+        const ticketNumber = `TKT-${booking.id.substring(0, 8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
         await bookingRepository.updateStatus(bookingId, BookingStatus.CONFIRMED);
-        console.log(`[booking-service] Booking ${bookingId} marked as CONFIRMED`);
+        await bookingRepository.updateTicketNumber(bookingId, ticketNumber);
+        console.log(
+          `[booking-service] Booking ${bookingId} marked as CONFIRMED with ticket ${ticketNumber}`
+        );
 
         // Publish booking.confirmed so catalog confirms reservations and notification logs/sends
         await eventBus.publish(EVENTS.BOOKING_CONFIRMED, {
           bookingId: booking.id,
+          ticketNumber,
           userId: booking.user_id,
           amount: parseFloat(booking.total_amount),
           items: booking.items,
+          travelers: booking.travelers || [],
+        });
+
+        // Publish booking.ticket.issued
+        await eventBus.publish(EVENTS.BOOKING_TICKET_ISSUED, {
+          bookingId: booking.id,
+          ticketNumber,
+          userId: booking.user_id,
+          amount: parseFloat(booking.total_amount),
+          items: booking.items,
+          travelers: booking.travelers || [],
+          issuedAt: new Date().toISOString(),
         });
       } else {
         console.warn(

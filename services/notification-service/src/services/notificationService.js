@@ -1,6 +1,8 @@
 import { sendEmail } from '../config/email.js';
 import { notificationRepository } from '../repositories/notificationRepository.js';
 import { EVENTS } from '../../../../shared/constants/events.js';
+import { ticketPdfService } from './ticketPdfService.js';
+import { ticketStore } from './ticketStore.js';
 
 export const notificationService = {
   async handleEventNotification(event) {
@@ -13,6 +15,7 @@ export const notificationService = {
     let subject = '';
     let text = '';
     let html = '';
+    const attachments = [];
 
     switch (type) {
       case EVENTS.BOOKING_CONFIRMED: {
@@ -86,6 +89,48 @@ export const notificationService = {
         break;
       }
 
+      case EVENTS.BOOKING_TICKET_ISSUED: {
+        const ticketNumber = data.ticketNumber || `TKT-${bookingId.substring(0, 8).toUpperCase()}`;
+        subject = `E-Ticket Issued - #${ticketNumber}`;
+        const travelerList =
+          (data.travelers || []).map((t) => t.full_name).join(', ') || 'Lead Traveler';
+        text = `Hello,\n\nYour official TravelGo E-Ticket #${ticketNumber} has been issued!\nBooking ID: ${bookingId}\nPassengers: ${travelerList}\nTotal: $${amount}\n\nPlease find your official E-Ticket PDF with QR verification attached to this email.`;
+
+        html = `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px;">
+            <h2 style="color: #1e3a8a; margin-top: 0;">✈️ E-Ticket Issued!</h2>
+            <p>Your ticket has been generated. Please find your PDF attached to this email.</p>
+            <div style="background-color: #f0fdf4; padding: 16px; border-radius: 6px; margin: 20px 0; border: 1px solid #bbf7d0;">
+              <p style="margin: 4px 0;"><strong>Ticket Number:</strong> ${ticketNumber}</p>
+              <p style="margin: 4px 0;"><strong>Booking Reference:</strong> ${bookingId}</p>
+              <p style="margin: 4px 0;"><strong>Passengers:</strong> ${travelerList}</p>
+              <p style="margin: 4px 0;"><strong>Total Paid:</strong> $${amount}</p>
+            </div>
+            <p>You can also download this ticket at any time from your TravelGo bookings page.</p>
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+            <small style="color: #64748b;">Travel Booking System Local Notification Service</small>
+          </div>
+        `;
+
+        try {
+          const pdfBuffer = await ticketPdfService.generateTicketPdf({
+            ticketNumber,
+            bookingId,
+            amount,
+            items: data.items,
+            travelers: data.travelers,
+          });
+          ticketStore.save(ticketNumber, pdfBuffer, bookingId);
+          attachments.push({
+            filename: `ticket-${ticketNumber}.pdf`,
+            content: pdfBuffer,
+          });
+        } catch (pdfErr) {
+          console.error('[notification-service] Failed to generate ticket PDF:', pdfErr.message);
+        }
+        break;
+      }
+
       default: {
         console.warn(`[notification-service] Unrecognized event type for notification: ${type}`);
         return null;
@@ -97,6 +142,7 @@ export const notificationService = {
       subject,
       text,
       html,
+      attachments,
     });
 
     const status = sendResult.success ? 'SENT' : 'FAILED';
@@ -118,5 +164,9 @@ export const notificationService = {
       `[notification-service] Notification record created with ID: ${record.id} (Status: ${status})`
     );
     return record;
+  },
+
+  async getTicketPdf(ticketNumber) {
+    return ticketStore.get(ticketNumber);
   },
 };
