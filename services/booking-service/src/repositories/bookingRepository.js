@@ -1,18 +1,62 @@
 import { pool, query } from '../config/db.js';
 
 export const bookingRepository = {
-  async createBooking({ userId, totalAmount, status = 'PENDING', items, travelers = [] }) {
+  async createBooking({
+    userId,
+    totalAmount,
+    status = 'PENDING',
+    items,
+    travelers = [],
+    couponCode = null,
+    discountAmount = 0,
+    couponId = null,
+  }) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
 
+      // Atomic coupon lock and validation within transaction
+      if (couponId) {
+        const couponRes = await client.query(`SELECT * FROM coupons WHERE id = $1 FOR UPDATE`, [
+          couponId,
+        ]);
+        const coupon = couponRes.rows[0];
+        if (!coupon || !coupon.active) {
+          throw new Error('Coupon is no longer available');
+        }
+        if (coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) {
+          throw new Error('Coupon usage limit reached');
+        }
+
+        const existingRedemption = await client.query(
+          `SELECT id FROM coupon_redemptions WHERE coupon_id = $1 AND user_id = $2 AND status = 'APPLIED' LIMIT 1`,
+          [couponId, userId]
+        );
+        if (existingRedemption.rows.length > 0) {
+          throw new Error('Coupon already redeemed by user');
+        }
+
+        await client.query(
+          `UPDATE coupons SET used_count = used_count + 1, updated_at = NOW() WHERE id = $1`,
+          [couponId]
+        );
+      }
+
       const bookingRes = await client.query(
-        `INSERT INTO bookings (user_id, status, total_amount)
-         VALUES ($1, $2, $3)
+        `INSERT INTO bookings (user_id, status, total_amount, coupon_code, discount_amount)
+         VALUES ($1, $2, $3, $4, $5)
          RETURNING *`,
-        [userId, status, totalAmount]
+        [userId, status, totalAmount, couponCode || null, discountAmount || 0]
       );
       const booking = bookingRes.rows[0];
+
+      if (couponId) {
+        await client.query(
+          `INSERT INTO coupon_redemptions (coupon_id, booking_id, user_id, discount_amount, status)
+           VALUES ($1, $2, $3, $4, 'APPLIED')`,
+          [couponId, booking.id, userId, discountAmount || 0]
+        );
+      }
 
       const createdItems = [];
       for (const item of items) {

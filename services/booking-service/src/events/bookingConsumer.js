@@ -2,6 +2,7 @@ import { eventBus } from '../../../../shared/events/eventBus.js';
 import { withIdempotency } from '../../../../shared/events/idempotency.js';
 import { pool } from '../config/db.js';
 import { bookingRepository } from '../repositories/bookingRepository.js';
+import { couponRepository } from '../repositories/couponRepository.js';
 import { BookingStateMachine, BookingStatus } from '../stateMachine/bookingStateMachine.js';
 import { EVENTS } from '../../../../shared/constants/events.js';
 
@@ -59,6 +60,7 @@ export async function startBookingConsumer() {
       // Transition from PENDING to CANCELLED
       if (BookingStateMachine.canTransition(booking.status, BookingStatus.CANCELLED)) {
         await bookingRepository.updateStatus(bookingId, BookingStatus.CANCELLED);
+        await couponRepository.releaseByBookingId(bookingId).catch(() => {});
         console.warn(
           `[booking-service] Booking ${bookingId} marked as CANCELLED due to payment failure`
         );
