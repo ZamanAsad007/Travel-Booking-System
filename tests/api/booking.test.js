@@ -44,5 +44,54 @@ describe('Booking Service API Tests', () => {
       expect(res.body.success).toBe(false);
       expect(res.body.error.code).toBe('UNAUTHORIZED');
     });
+
+    test('should reject GET /api/bookings/admin/stats without admin role', async () => {
+      const jwt = (await import('jsonwebtoken')).default;
+      const userToken = jwt.sign(
+        { id: 'u1', role: 'USER' },
+        process.env.JWT_SECRET || 'travel_booking_super_secret_jwt_key_2026_change_in_production'
+      );
+      const res = await request(app)
+        .get('/api/bookings/admin/stats')
+        .set('Authorization', `Bearer ${userToken}`);
+
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('FORBIDDEN');
+    });
+
+    test('should allow GET /api/bookings/admin/stats for admin user', async () => {
+      const jwt = (await import('jsonwebtoken')).default;
+      const adminToken = jwt.sign(
+        { id: 'admin1', role: 'ADMIN' },
+        process.env.JWT_SECRET || 'travel_booking_super_secret_jwt_key_2026_change_in_production'
+      );
+
+      // Mock queries for stats
+      bookingPool.query.mockImplementation(async (sql) => {
+        if (typeof sql === 'string' && sql.includes('total_revenue')) {
+          return {
+            rows: [
+              {
+                total_bookings: 10,
+                confirmed_bookings: 8,
+                cancelled_bookings: 2,
+                pending_bookings: 0,
+                total_revenue: '5000.00',
+              },
+            ],
+          };
+        }
+        return { rows: [] };
+      });
+
+      const res = await request(app)
+        .get('/api/bookings/admin/stats')
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.totalBookings).toBe(10);
+      expect(res.body.data.totalRevenue).toBe(5000);
+    });
   });
 });

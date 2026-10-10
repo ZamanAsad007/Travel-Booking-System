@@ -61,4 +61,35 @@ export const bookingController = {
       next(error);
     }
   },
+
+  async adminListAll(req, res, next) {
+    try {
+      const { page, limit, status } = req.query;
+      const result = await bookingService.getAllBookings({
+        page: page ? parseInt(page, 10) : 1,
+        limit: limit ? parseInt(limit, 10) : 50,
+        status,
+      });
+      res.status(200).json({
+        success: true,
+        data: result,
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getStats(req, res, next) {
+    try {
+      const stats = await bookingService.getStats();
+      res.status(200).json({
+        success: true,
+        data: stats,
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

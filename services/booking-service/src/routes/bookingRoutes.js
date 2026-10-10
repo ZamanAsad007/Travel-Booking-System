@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { bookingController } from '../controllers/bookingController.js';
-import { authenticate } from '../middleware/authMiddleware.js';
+import { authenticate, requireRole } from '../middleware/authMiddleware.js';
 import { validate } from '../middleware/validate.js';
 
 const router = Router();
@@ -36,6 +36,10 @@ const createBookingSchema = z.object({
 
 // All booking endpoints require authentication
 router.use(authenticate);
+
+// Admin endpoints
+router.get('/admin/all', requireRole('ADMIN'), bookingController.adminListAll);
+router.get('/admin/stats', requireRole('ADMIN'), bookingController.getStats);
 
 router.post('/', validate(createBookingSchema), bookingController.create);
 router.get('/', bookingController.list);

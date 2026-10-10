@@ -138,4 +138,90 @@ export const catalogService = {
   async releaseReservation(bookingId) {
     return reservationRepository.releaseReservation(bookingId);
   },
+
+  // Admin methods
+  async createFlight(data) {
+    return flightRepository.create(data);
+  },
+
+  async updateFlight(id, data) {
+    const existing = await flightRepository.findById(id);
+    if (!existing) {
+      const err = new Error('Flight not found');
+      err.statusCode = 404;
+      err.code = 'FLIGHT_NOT_FOUND';
+      throw err;
+    }
+    return flightRepository.update(id, data);
+  },
+
+  async deleteFlight(id) {
+    const existing = await flightRepository.findById(id);
+    if (!existing) {
+      const err = new Error('Flight not found');
+      err.statusCode = 404;
+      err.code = 'FLIGHT_NOT_FOUND';
+      throw err;
+    }
+    return flightRepository.delete(id);
+  },
+
+  async createHotel(data) {
+    return hotelRepository.createHotel(data);
+  },
+
+  async updateHotel(id, data) {
+    const existing = await hotelRepository.findById(id);
+    if (!existing) {
+      const err = new Error('Hotel not found');
+      err.statusCode = 404;
+      err.code = 'HOTEL_NOT_FOUND';
+      throw err;
+    }
+    return hotelRepository.updateHotel(id, data);
+  },
+
+  async deleteHotel(id) {
+    const existing = await hotelRepository.findById(id);
+    if (!existing) {
+      const err = new Error('Hotel not found');
+      err.statusCode = 404;
+      err.code = 'HOTEL_NOT_FOUND';
+      throw err;
+    }
+    return hotelRepository.deleteHotel(id);
+  },
+
+  async createRoom(data) {
+    const hotel = await hotelRepository.findById(data.hotel_id);
+    if (!hotel) {
+      const err = new Error('Hotel not found');
+      err.statusCode = 404;
+      err.code = 'HOTEL_NOT_FOUND';
+      throw err;
+    }
+    return hotelRepository.createRoom(data);
+  },
+
+  async updateRoom(id, data) {
+    const existing = await hotelRepository.findRoomById(id);
+    if (!existing) {
+      const err = new Error('Room not found');
+      err.statusCode = 404;
+      err.code = 'ROOM_NOT_FOUND';
+      throw err;
+    }
+    return hotelRepository.updateRoom(id, data);
+  },
+
+  async deleteRoom(id) {
+    const existing = await hotelRepository.findRoomById(id);
+    if (!existing) {
+      const err = new Error('Room not found');
+      err.statusCode = 404;
+      err.code = 'ROOM_NOT_FOUND';
+      throw err;
+    }
+    return hotelRepository.deleteRoom(id);
+  },
 };
