@@ -3,12 +3,17 @@ import { errorResponse } from '../utils/response.js';
 
 export function createAuthMiddleware(secret) {
   return function authenticate(req, res, next) {
+    let token = null;
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return errorResponse(res, 'Authentication token is required', 'UNAUTHORIZED', 401);
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.query && req.query.token) {
+      token = req.query.token;
     }
 
-    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return errorResponse(res, 'Authentication token is required', 'UNAUTHORIZED', 401);
+    }
     try {
       const decoded = jwt.verify(token, secret);
       req.user = decoded;

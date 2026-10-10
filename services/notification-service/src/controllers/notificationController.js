@@ -1,4 +1,5 @@
 import { notificationRepository } from '../repositories/notificationRepository.js';
+import { sseService } from '../services/sseService.js';
 
 export const notificationController = {
   async listNotifications(req, res, next) {
@@ -61,6 +62,16 @@ export const notificationController = {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="ticket-${ticketNumber}.pdf"`);
       return res.send(pdfBuffer);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  streamBookings(req, res, next) {
+    try {
+      const { bookingId } = req.query;
+      const userId = req.user?.id || req.query.userId || null;
+      sseService.addClient(req, res, { userId, bookingId });
     } catch (error) {
       next(error);
     }
