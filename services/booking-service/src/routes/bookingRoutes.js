@@ -40,6 +40,8 @@ const travelerSchema = z.object({
 const createBookingSchema = z.object({
   items: z.array(bookingItemSchema).min(1, 'At least one item is required in the booking'),
   travelers: z.array(travelerSchema).min(1, 'At least one traveler is required').optional(),
+  couponCode: z.string().optional().nullable(),
+  coupon_code: z.string().optional().nullable(),
 });
 
 // All booking endpoints require authentication
@@ -48,6 +50,13 @@ router.use(authenticate);
 // Admin endpoints
 router.get('/admin/all', requireRole('ADMIN'), bookingController.adminListAll);
 router.get('/admin/stats', requireRole('ADMIN'), bookingController.getStats);
+router.get('/admin/coupons', requireRole('ADMIN'), bookingController.adminListCoupons);
+router.post('/admin/coupons', requireRole('ADMIN'), bookingController.adminCreateCoupon);
+router.put('/admin/coupons/:id', requireRole('ADMIN'), bookingController.adminUpdateCoupon);
+router.delete('/admin/coupons/:id', requireRole('ADMIN'), bookingController.adminDeleteCoupon);
+
+// Coupon validation
+router.post('/coupons/validate', bookingController.validateCoupon);
 
 router.post('/', validate(createBookingSchema), bookingController.create);
 router.get('/', bookingController.list);

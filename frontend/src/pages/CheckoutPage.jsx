@@ -2,7 +2,20 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { bookingApi } from '../api/bookings.js';
-import { ShieldCheck, CreditCard, AlertCircle, ArrowLeft, Check, Plus, Trash2, Users } from 'lucide-react';
+import {
+  ShieldCheck,
+  CreditCard,
+  AlertCircle,
+  ArrowLeft,
+  Check,
+  Plus,
+  Trash2,
+  Users,
+  Tag,
+  Percent,
+  Sparkles,
+  X,
+} from 'lucide-react';
 
 export default function CheckoutPage() {
   const location = useLocation();
@@ -12,6 +25,12 @@ export default function CheckoutPage() {
   const itemState = location.state;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Coupon state
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState('');
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
 
   const [travelers, setTravelers] = useState([
     {
@@ -49,10 +68,63 @@ export default function CheckoutPage() {
     checkOut,
   } = itemState;
 
+  // Dynamic pricing calculation
+  const dateForPricing = checkIn || itemState.departureDate || itemState.departureTime || itemState.date;
+  const isWeekend = (() => {
+    if (!dateForPricing) return false;
+    const d = new Date(dateForPricing);
+    if (isNaN(d.getTime())) return false;
+    const day = d.getUTCDay();
+    return day === 0 || day === 5 || day === 6;
+  })();
+
+  const peakSeason = (() => {
+    if (!dateForPricing) return null;
+    const d = new Date(dateForPricing);
+    if (isNaN(d.getTime())) return null;
+    const month = d.getUTCMonth();
+    if (month >= 5 && month <= 7) return { name: 'Summer Peak', rate: 0.2 };
+    if (month === 11) return { name: 'Holiday Peak', rate: 0.25 };
+    return null;
+  })();
+
   const travelerCount = travelers.length;
-  const subtotal = (unitPrice * travelerCount).toFixed(2);
-  const taxes = (unitPrice * travelerCount * 0.1).toFixed(2);
-  const totalAmount = (parseFloat(subtotal) + parseFloat(taxes)).toFixed(2);
+  const baseTotal = unitPrice * travelerCount;
+  const weekendSurcharge = isWeekend ? Math.round(baseTotal * 0.15 * 100) / 100 : 0;
+  const peakSurcharge = peakSeason ? Math.round(baseTotal * peakSeason.rate * 100) / 100 : 0;
+  const grossSubtotal = baseTotal + weekendSurcharge + peakSurcharge;
+
+  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const discountedSubtotal = Math.max(0, grossSubtotal - discountAmount);
+  const taxes = Math.round(discountedSubtotal * 0.1 * 100) / 100;
+  const totalAmount = (discountedSubtotal + taxes).toFixed(2);
+
+  const handleApplyCoupon = async (e) => {
+    if (e) e.preventDefault();
+    if (!couponInput.trim()) return;
+    setValidatingCoupon(true);
+    setCouponError('');
+    try {
+      const res = await bookingApi.validateCoupon(couponInput.trim().toUpperCase(), grossSubtotal);
+      if (res.data?.valid) {
+        setAppliedCoupon(res.data);
+      } else {
+        setCouponError(res.error?.message || 'Invalid coupon code');
+        setAppliedCoupon(null);
+      }
+    } catch (err) {
+      setCouponError(err.message || 'Failed to apply coupon');
+      setAppliedCoupon(null);
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponError('');
+  };
 
   const handleAddTraveler = () => {
     setTravelers([
@@ -113,6 +185,7 @@ export default function CheckoutPage() {
           date_of_birth: t.date_of_birth,
           seat_no: t.seat_no ? t.seat_no.trim().toUpperCase() : null,
         })),
+        couponCode: appliedCoupon?.coupon?.code || undefined,
       };
 
       const res = await bookingApi.createBooking(payload);
@@ -315,28 +388,140 @@ export default function CheckoutPage() {
             Price Summary
           </h3>
 
+          {/* Coupon Code Input & Status */}
+          <div style={{ marginBottom: '1.25rem', borderBottom: '1px solid var(--border)', paddingBottom: '1.25rem' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+              <Tag size={15} />
+              Promo / Coupon Code
+            </label>
+            {appliedCoupon ? (
+              <div style={{ background: 'var(--success-bg)', border: '1px solid #86efac', borderRadius: 'var(--radius-sm)', padding: '0.65rem 0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#166534', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Check size={14} />
+                    {appliedCoupon.coupon.code} applied!
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: '#15803d' }}>
+                    {appliedCoupon.coupon.discount_type === 'PERCENT'
+                      ? `${appliedCoupon.coupon.discount_value}% off (-$${discountAmount.toFixed(2)})`
+                      : `$${appliedCoupon.coupon.discount_value} off`}
+                  </div>
+                </div>
+                <button
+                  onClick={handleRemoveCoupon}
+                  type="button"
+                  style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: '0.2rem', display: 'flex', alignItems: 'center' }}
+                  title="Remove coupon"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleApplyCoupon} style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  type="text"
+                  placeholder="e.g. SAVE10, FLAT50"
+                  value={couponInput}
+                  onChange={(e) => {
+                    setCouponInput(e.target.value.toUpperCase());
+                    setCouponError('');
+                  }}
+                  className="form-control"
+                  style={{ fontSize: '0.85rem', padding: '0.45rem 0.75rem', textTransform: 'uppercase' }}
+                />
+                <button
+                  type="submit"
+                  disabled={validatingCoupon || !couponInput.trim()}
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.85rem', padding: '0.45rem 0.85rem', whiteSpace: 'nowrap' }}
+                >
+                  {validatingCoupon ? 'Checking...' : 'Apply'}
+                </button>
+              </form>
+            )}
+            {couponError && (
+              <div style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <AlertCircle size={13} />
+                {couponError}
+              </div>
+            )}
+          </div>
+
+          {/* Itemized Price Breakdown */}
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               marginBottom: '0.5rem',
-              fontSize: '0.95rem',
+              fontSize: '0.92rem',
             }}
           >
-            <span style={{ color: 'var(--text-muted)' }}>Base Price ({quantity}x)</span>
-            <span>${subtotal}</span>
+            <span style={{ color: 'var(--text-muted)' }}>
+              Base Price ({travelerCount}x @ ${parseFloat(unitPrice).toFixed(2)})
+            </span>
+            <span>${baseTotal.toFixed(2)}</span>
           </div>
+
+          {isWeekend && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '0.5rem',
+                fontSize: '0.92rem',
+                color: '#b45309',
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <Sparkles size={13} /> Weekend Departure (+15%)
+              </span>
+              <span>+${weekendSurcharge.toFixed(2)}</span>
+            </div>
+          )}
+
+          {peakSeason && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '0.5rem',
+                fontSize: '0.92rem',
+                color: '#b45309',
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <Sparkles size={13} /> {peakSeason.name} (+{peakSeason.rate * 100}%)
+              </span>
+              <span>+${peakSurcharge.toFixed(2)}</span>
+            </div>
+          )}
+
+          {appliedCoupon && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '0.5rem',
+                fontSize: '0.92rem',
+                color: 'var(--success)',
+                fontWeight: 600,
+              }}
+            >
+              <span>Coupon Discount ({appliedCoupon.coupon.code})</span>
+              <span>-${discountAmount.toFixed(2)}</span>
+            </div>
+          )}
 
           <div
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               marginBottom: '0.5rem',
-              fontSize: '0.95rem',
+              fontSize: '0.92rem',
             }}
           >
             <span style={{ color: 'var(--text-muted)' }}>Taxes & Regulatory Fees (10%)</span>
-            <span>${taxes}</span>
+            <span>${taxes.toFixed(2)}</span>
           </div>
 
           <div
