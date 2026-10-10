@@ -11,9 +11,16 @@ export async function runMigrations() {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const sqlFile = path.join(__dirname, '001_create_booking_tables.sql');
-    const sql = fs.readFileSync(sqlFile, 'utf8');
-    await client.query(sql);
+    const files = fs
+      .readdirSync(__dirname)
+      .filter((f) => f.endsWith('.sql'))
+      .sort();
+    for (const file of files) {
+      const sqlFile = path.join(__dirname, file);
+      const sql = fs.readFileSync(sqlFile, 'utf8');
+      await client.query(sql);
+      console.log(`[booking-service] Applied migration ${file}`);
+    }
     await client.query('COMMIT');
     console.log('[booking-service] Migrations applied successfully.');
   } catch (err) {

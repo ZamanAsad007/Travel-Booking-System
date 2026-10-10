@@ -5,7 +5,7 @@ import { eventBus } from '../../../../shared/events/eventBus.js';
 import { EVENTS } from '../../../../shared/constants/events.js';
 
 export const bookingService = {
-  async createBooking({ userId, items }) {
+  async createBooking({ userId, items, travelers = [] }) {
     if (!items || items.length === 0) {
       const err = new Error('Booking must contain at least one item');
       err.statusCode = 400;
@@ -14,15 +14,14 @@ export const bookingService = {
     }
 
     // 1. Verify item availability and retrieve official prices from catalog
+    // Price = unit price x travelers (if travelers provided)
+    const travelerCount = travelers && travelers.length > 0 ? travelers.length : null;
     const validatedItems = [];
     let totalAmount = 0;
 
     for (const item of items) {
-      const check = await catalogClient.checkAvailability(
-        item.itemType,
-        item.itemId,
-        item.quantity
-      );
+      const quantity = travelerCount !== null ? travelerCount : item.quantity || 1;
+      const check = await catalogClient.checkAvailability(item.itemType, item.itemId, quantity);
       if (!check.available) {
         const err = new Error(
           `Item ${item.itemId} (${item.itemType}) is unavailable or has insufficient capacity`
@@ -33,11 +32,12 @@ export const bookingService = {
       }
 
       const unitPrice = parseFloat(check.unitPrice);
-      const subtotal = unitPrice * item.quantity;
+      const subtotal = unitPrice * quantity;
       totalAmount += subtotal;
 
       validatedItems.push({
         ...item,
+        quantity,
         unitPrice,
       });
     }
@@ -48,6 +48,7 @@ export const bookingService = {
       totalAmount,
       status: BookingStatus.PENDING,
       items: validatedItems,
+      travelers,
     });
 
     try {
@@ -68,6 +69,7 @@ export const bookingService = {
         userId: booking.user_id,
         amount: parseFloat(booking.total_amount),
         items: validatedItems,
+        travelers: booking.travelers || [],
       });
 
       console.log(`[booking-service] Booking ${booking.id} created and event published (PENDING)`);

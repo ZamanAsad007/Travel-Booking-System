@@ -51,6 +51,7 @@ describe('Shared Utilities & Constants Unit Tests', () => {
       expect(EVENTS.BOOKING_CONFIRMED).toBe('booking.confirmed');
       expect(EVENTS.BOOKING_CANCELLED).toBe('booking.cancelled');
       expect(EVENTS.PAYMENT_REFUNDED).toBe('payment.refunded');
+      expect(EVENTS.BOOKING_TICKET_ISSUED).toBe('booking.ticket.issued');
       expect(EXCHANGE_NAME).toBe('travel.events');
     });
   });

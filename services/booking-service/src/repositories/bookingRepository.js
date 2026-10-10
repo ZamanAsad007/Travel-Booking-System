@@ -1,7 +1,7 @@
 import { pool, query } from '../config/db.js';
 
 export const bookingRepository = {
-  async createBooking({ userId, totalAmount, status = 'PENDING', items }) {
+  async createBooking({ userId, totalAmount, status = 'PENDING', items, travelers = [] }) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -33,10 +33,24 @@ export const bookingRepository = {
         createdItems.push(itemRes.rows[0]);
       }
 
+      const createdTravelers = [];
+      if (travelers && travelers.length > 0) {
+        for (const t of travelers) {
+          const travRes = await client.query(
+            `INSERT INTO travelers (booking_id, full_name, passport_no, date_of_birth, seat_no)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING *`,
+            [booking.id, t.full_name, t.passport_no, t.date_of_birth, t.seat_no || null]
+          );
+          createdTravelers.push(travRes.rows[0]);
+        }
+      }
+
       await client.query('COMMIT');
       return {
         ...booking,
         items: createdItems,
+        travelers: createdTravelers,
       };
     } catch (err) {
       await client.query('ROLLBACK');
@@ -56,10 +70,15 @@ export const bookingRepository = {
     if (bookings.length === 0) return [];
 
     const bookingIds = bookings.map((b) => b.id);
-    const itemsRes = await query(
-      `SELECT * FROM booking_items WHERE booking_id = ANY($1::uuid[]) ORDER BY created_at ASC`,
-      [bookingIds]
-    );
+    const [itemsRes, travRes] = await Promise.all([
+      query(
+        `SELECT * FROM booking_items WHERE booking_id = ANY($1::uuid[]) ORDER BY created_at ASC`,
+        [bookingIds]
+      ),
+      query(`SELECT * FROM travelers WHERE booking_id = ANY($1::uuid[]) ORDER BY created_at ASC`, [
+        bookingIds,
+      ]).catch(() => ({ rows: [] })),
+    ]);
 
     const itemsByBookingId = {};
     for (const item of itemsRes.rows) {
@@ -69,9 +88,18 @@ export const bookingRepository = {
       itemsByBookingId[item.booking_id].push(item);
     }
 
+    const travelersByBookingId = {};
+    for (const trav of travRes.rows) {
+      if (!travelersByBookingId[trav.booking_id]) {
+        travelersByBookingId[trav.booking_id] = [];
+      }
+      travelersByBookingId[trav.booking_id].push(trav);
+    }
+
     return bookings.map((b) => ({
       ...b,
       items: itemsByBookingId[b.id] || [],
+      travelers: travelersByBookingId[b.id] || [],
     }));
   },
 
@@ -80,14 +108,17 @@ export const bookingRepository = {
     const booking = bookingRes.rows[0];
     if (!booking) return null;
 
-    const itemsRes = await query(
-      `SELECT * FROM booking_items WHERE booking_id = $1 ORDER BY created_at ASC`,
-      [id]
-    );
+    const [itemsRes, travRes] = await Promise.all([
+      query(`SELECT * FROM booking_items WHERE booking_id = $1 ORDER BY created_at ASC`, [id]),
+      query(`SELECT * FROM travelers WHERE booking_id = $1 ORDER BY created_at ASC`, [id]).catch(
+        () => ({ rows: [] })
+      ),
+    ]);
 
     return {
       ...booking,
       items: itemsRes.rows,
+      travelers: travRes.rows,
     };
   },
 
@@ -98,6 +129,17 @@ export const bookingRepository = {
        WHERE id = $2
        RETURNING *`,
       [newStatus, id]
+    );
+    return res.rows[0] || null;
+  },
+
+  async updateTicketNumber(id, ticketNumber) {
+    const res = await query(
+      `UPDATE bookings
+       SET ticket_number = $1, updated_at = NOW()
+       WHERE id = $2
+       RETURNING *`,
+      [ticketNumber, id]
     );
     return res.rows[0] || null;
   },
