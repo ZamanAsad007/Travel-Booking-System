@@ -30,3 +30,31 @@ export function authenticate(req, res, next) {
     });
   }
 }
+
+export function requireRole(...roles) {
+  return function (req, res, next) {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        data: null,
+        error: {
+          message: 'Authentication required',
+          code: 'UNAUTHORIZED',
+        },
+      });
+    }
+    const userRole = (req.user.role || '').toUpperCase();
+    const normalizedRoles = roles.map((r) => r.toUpperCase());
+    if (!normalizedRoles.includes(userRole)) {
+      return res.status(403).json({
+        success: false,
+        data: null,
+        error: {
+          message: 'Forbidden: insufficient permissions',
+          code: 'FORBIDDEN',
+        },
+      });
+    }
+    next();
+  };
+}

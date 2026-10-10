@@ -19,3 +19,17 @@ export function createAuthMiddleware(secret) {
     }
   };
 }
+
+export function requireRole(...roles) {
+  return function (req, res, next) {
+    if (!req.user) {
+      return errorResponse(res, 'Authentication required', 'UNAUTHORIZED', 401);
+    }
+    const userRole = (req.user.role || '').toUpperCase();
+    const normalizedRoles = roles.map((r) => r.toUpperCase());
+    if (!normalizedRoles.includes(userRole)) {
+      return errorResponse(res, 'Forbidden: insufficient permissions', 'FORBIDDEN', 403);
+    }
+    next();
+  };
+}

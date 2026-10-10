@@ -2,6 +2,7 @@ import app from './app.js';
 import { config } from './config/env.js';
 import { pool } from './config/db.js';
 import { runMigrations } from './migrations/migrate.js';
+import { authService } from './services/authService.js';
 
 async function waitForDb(retries = 10, delay = 2000) {
   for (let i = 0; i < retries; i++) {
@@ -23,6 +24,7 @@ async function startServer() {
   try {
     await waitForDb();
     await runMigrations();
+    await authService.seedAdmin();
 
     const server = app.listen(config.port, () => {
       console.log(`[auth-service] Running on port ${config.port}`);
