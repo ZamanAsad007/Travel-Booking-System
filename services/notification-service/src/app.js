@@ -19,6 +19,7 @@ app.use(metricsMiddleware);
 app.get('/metrics', metricsEndpoint);
 app.use(healthRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/stream', notificationRoutes);
 
 // 404 handler
 app.use((req, res) => {

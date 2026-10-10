@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { bookingApi } from '../api/bookings.js';
+import { useBookingStatus } from '../hooks/useBookingStatus.js';
 import StatusBadge from '../components/StatusBadge.jsx';
 import {
   Clock,
@@ -17,6 +18,9 @@ import {
   Download,
   Ticket,
   Users,
+  Radio,
+  Activity,
+  Tag,
 } from 'lucide-react';
 
 export default function BookingDetailPage() {
@@ -27,15 +31,16 @@ export default function BookingDetailPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState('');
 
-  // Auto-poll every 2.5 seconds while status is PENDING!
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['booking', id],
-    queryFn: () => bookingApi.getBookingById(id),
-    refetchInterval: (query) => {
-      const status = query?.state?.data?.data?.booking?.status;
-      return status === 'PENDING' ? 2500 : false;
-    },
-  });
+  // Real-time status via SSE stream with polling fallback
+  const {
+    booking,
+    isLoading,
+    error,
+    connectionState,
+    liveEvent,
+    toast,
+    clearToast,
+  } = useBookingStatus(id);
 
   const cancelMutation = useMutation({
     mutationFn: () => bookingApi.cancelBooking(id),
@@ -47,8 +52,6 @@ export default function BookingDetailPage() {
       setCancelError(err.message || 'Failed to cancel booking');
     },
   });
-
-  const booking = data?.data?.booking;
 
   const handleCancel = () => {
     if (window.confirm('Are you sure you want to cancel this booking? This will release reserved inventory and trigger a refund.')) {
@@ -104,6 +107,65 @@ export default function BookingDetailPage() {
         Back to Bookings
       </button>
 
+      {/* Real-Time Toast Notification */}
+      {toast && (
+        <div
+          style={{
+            background:
+              toast.type === 'success'
+                ? '#dcfce7'
+                : toast.type === 'danger'
+                ? '#fee2e2'
+                : '#e0f2fe',
+            border: `1px solid ${
+              toast.type === 'success'
+                ? '#86efac'
+                : toast.type === 'danger'
+                ? '#fca5a5'
+                : '#7dd3fc'
+            }`,
+            color:
+              toast.type === 'success'
+                ? '#166534'
+                : toast.type === 'danger'
+                ? '#991b1b'
+                : '#0369a1',
+            padding: '0.85rem 1.25rem',
+            borderRadius: 'var(--radius-sm)',
+            marginBottom: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 600 }}>
+            {toast.type === 'success' ? (
+              <CheckCircle2 size={18} />
+            ) : toast.type === 'danger' ? (
+              <XCircle size={18} />
+            ) : (
+              <Activity size={18} />
+            )}
+            <span>{toast.message}</span>
+          </div>
+          <button
+            onClick={clearToast}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'inherit',
+              padding: '0.2rem',
+              fontWeight: 700,
+              fontSize: '1rem',
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="card" style={{ marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
@@ -111,10 +173,17 @@ export default function BookingDetailPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem' }}>
               <StatusBadge status={booking.status} />
               {isPending && (
-                <span style={{ fontSize: '0.8rem', color: '#b45309', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <RefreshCw size={13} className="animate-spin" />
-                  Live polling saga status...
-                </span>
+                connectionState === 'connected' ? (
+                  <span style={{ fontSize: '0.8rem', color: '#166534', display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#dcfce7', padding: '0.2rem 0.55rem', borderRadius: '12px' }}>
+                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#22c55e', display: 'inline-block' }} />
+                    Live SSE Stream Connected
+                  </span>
+                ) : (
+                  <span style={{ fontSize: '0.8rem', color: '#b45309', display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#fef3c7', padding: '0.2rem 0.55rem', borderRadius: '12px' }}>
+                    <RefreshCw size={12} className="animate-spin" />
+                    Polling Fallback Active
+                  </span>
+                )
               )}
             </div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0.25rem 0' }}>
@@ -130,6 +199,11 @@ export default function BookingDetailPage() {
             <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)' }}>
               ${parseFloat(booking.total_amount).toFixed(2)}
             </div>
+            {booking.coupon_code && (
+              <span style={{ fontSize: '0.75rem', color: '#166534', background: '#dcfce7', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>
+                Coupon: {booking.coupon_code} (-${parseFloat(booking.discount_amount || 0).toFixed(2)})
+              </span>
+            )}
           </div>
         </div>
 

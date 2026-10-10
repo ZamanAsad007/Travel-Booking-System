@@ -2,11 +2,15 @@ import { eventBus } from '../../../../shared/events/eventBus.js';
 import { withIdempotency } from '../../../../shared/events/idempotency.js';
 import { pool } from '../config/db.js';
 import { notificationService } from '../services/notificationService.js';
+import { sseService } from '../services/sseService.js';
 import { EVENTS } from '../../../../shared/constants/events.js';
 
 export async function startNotificationConsumer() {
   const queueName = 'notification-service.events';
   const routingKeys = [
+    EVENTS.BOOKING_CREATED,
+    EVENTS.PAYMENT_SUCCEEDED,
+    EVENTS.PAYMENT_FAILED,
     EVENTS.BOOKING_CONFIRMED,
     EVENTS.BOOKING_CANCELLED,
     EVENTS.PAYMENT_REFUNDED,
@@ -18,7 +22,11 @@ export async function startNotificationConsumer() {
     console.log(
       `[notification-service] Processing notification event: ${type} for booking: ${data.bookingId}`
     );
+    // 1. Process email notifications where applicable
     await notificationService.handleEventNotification(event);
+
+    // 2. Broadcast event to live SSE clients
+    sseService.broadcastBookingEvent(event);
   };
 
   try {
