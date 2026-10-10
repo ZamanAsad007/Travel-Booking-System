@@ -11,4 +11,8 @@ export const adminApi = {
   deleteHotel: (id) => api.delete(`/catalog/admin/hotels/${id}`),
   createRoom: (hotelId, roomData) => api.post(`/catalog/admin/hotels/${hotelId}/rooms`, roomData),
   deleteRoom: (id) => api.delete(`/catalog/admin/rooms/${id}`),
+  getAllCoupons: (params) => api.get('/bookings/admin/coupons', { params }),
+  createCoupon: (couponData) => api.post('/bookings/admin/coupons', couponData),
+  updateCoupon: (id, couponData) => api.put(`/bookings/admin/coupons/${id}`, couponData),
+  deleteCoupon: (id) => api.delete(`/bookings/admin/coupons/${id}`),
 };

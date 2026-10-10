@@ -28,4 +28,7 @@ export const bookingApi = {
     link.remove();
     window.URL.revokeObjectURL(url);
   },
+  validateCoupon: async (code, amount) => {
+    return api.post('/bookings/coupons/validate', { code, amount });
+  },
 };
