@@ -51,6 +51,7 @@ router.get('/admin/stats', requireRole('ADMIN'), bookingController.getStats);
 
 router.post('/', validate(createBookingSchema), bookingController.create);
 router.get('/', bookingController.list);
+router.get('/:id/ticket/download', bookingController.downloadTicketPdf);
 router.get('/:id/ticket', bookingController.getTicket);
 router.get('/:id', bookingController.getById);
 router.post('/:id/cancel', bookingController.cancel);

@@ -59,6 +59,45 @@ export const bookingController = {
     }
   },
 
+  async downloadTicketPdf(req, res, next) {
+    try {
+      const booking = await bookingService.getBookingById(
+        req.params.id,
+        req.user.id,
+        req.user.role
+      );
+
+      if (booking.status !== 'CONFIRMED' || !booking.ticket_number) {
+        return res.status(400).json({
+          success: false,
+          data: null,
+          error: {
+            message: 'E-Ticket is only available for confirmed bookings',
+            code: 'TICKET_NOT_AVAILABLE',
+          },
+        });
+      }
+
+      const { generateTicketPdf } = await import('../../../../shared/utils/ticketPdf.js');
+      const pdfBuffer = await generateTicketPdf({
+        ticketNumber: booking.ticket_number,
+        bookingId: booking.id,
+        amount: booking.total_amount,
+        items: booking.items || [],
+        travelers: booking.travelers || [],
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="ticket-${booking.ticket_number}.pdf"`
+      );
+      return res.send(pdfBuffer);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async list(req, res, next) {
     try {
       const bookings = await bookingService.getUserBookings(req.user.id);

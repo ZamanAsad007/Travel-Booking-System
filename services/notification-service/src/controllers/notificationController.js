@@ -43,4 +43,26 @@ export const notificationController = {
       next(error);
     }
   },
+
+  async downloadTicket(req, res, next) {
+    try {
+      const { ticketNumber } = req.params;
+      const { ticketStore } = await import('../services/ticketStore.js');
+      const pdfBuffer = ticketStore.get(ticketNumber);
+
+      if (!pdfBuffer) {
+        return res.status(404).json({
+          success: false,
+          data: null,
+          error: { message: 'Ticket PDF not found or not yet generated' },
+        });
+      }
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="ticket-${ticketNumber}.pdf"`);
+      return res.send(pdfBuffer);
+    } catch (error) {
+      next(error);
+    }
+  },
 };
