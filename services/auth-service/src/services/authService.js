@@ -4,7 +4,7 @@ import { userRepository } from '../repositories/userRepository.js';
 import { config } from '../config/env.js';
 
 export const authService = {
-  async register({ name, email, password, role = 'user' }) {
+  async register({ name, email, password, role = 'USER' }) {
     const existingUser = await userRepository.findByEmail(email);
     if (existingUser) {
       const err = new Error('An account with this email already exists');
@@ -20,7 +20,7 @@ export const authService = {
       name,
       email,
       passwordHash,
-      role,
+      role: (role || 'USER').toUpperCase(),
     });
 
     const token = this.generateToken(user);
@@ -48,7 +48,7 @@ export const authService = {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: (user.role || 'USER').toUpperCase(),
       created_at: user.created_at,
     };
 
@@ -67,13 +67,17 @@ export const authService = {
     return user;
   },
 
+  async seedAdmin() {
+    return userRepository.seedAdminUser(bcrypt);
+  },
+
   generateToken(user) {
     return jwt.sign(
       {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
+        role: (user.role || 'USER').toUpperCase(),
       },
       config.jwtSecret,
       { expiresIn: config.jwtExpiresIn }

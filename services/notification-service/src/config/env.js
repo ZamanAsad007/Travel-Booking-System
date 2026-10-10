@@ -4,6 +4,8 @@ dotenv.config();
 
 export const config = {
   port: parseInt(process.env.NOTIFICATION_SERVICE_PORT || '3005', 10),
+  jwtSecret:
+    process.env.JWT_SECRET || 'travel_booking_super_secret_jwt_key_2026_change_in_production',
   db: {
     host: process.env.POSTGRES_HOST || 'localhost',
     port: parseInt(process.env.POSTGRES_PORT || '5432', 10),

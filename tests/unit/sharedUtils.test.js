@@ -62,4 +62,32 @@ describe('Shared Utilities & Constants Unit Tests', () => {
       expect(BOOKING_STATUS.CANCELLED).toBe('CANCELLED');
     });
   });
+
+  describe('Role-based access control middleware', () => {
+    test('should allow user with required role', async () => {
+      const { requireRole } = await import('../../shared/middleware/authMiddleware.js');
+      const req = { user: { id: 'u1', role: 'ADMIN' } };
+      const res = { status: jest.fn().mockReturnThis(), json: jest.fn().mockReturnThis() };
+      const next = jest.fn();
+
+      const middleware = requireRole('ADMIN');
+      middleware(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+    });
+
+    test('should reject user with non-matching role with 403', async () => {
+      const { requireRole } = await import('../../shared/middleware/authMiddleware.js');
+      const req = { user: { id: 'u1', role: 'USER' } };
+      const res = { status: jest.fn().mockReturnThis(), json: jest.fn().mockReturnThis() };
+      const next = jest.fn();
+
+      const middleware = requireRole('ADMIN');
+      middleware(req, res, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+  });
 });

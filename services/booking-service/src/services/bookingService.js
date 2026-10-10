@@ -132,4 +132,12 @@ export const bookingService = {
       updated_at: updated.updated_at,
     };
   },
+
+  async getAllBookings(params) {
+    return bookingRepository.findAll(params);
+  },
+
+  async getStats() {
+    return bookingRepository.getStats();
+  },
 };

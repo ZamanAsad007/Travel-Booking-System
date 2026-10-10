@@ -109,4 +109,78 @@ export const hotelRepository = {
     const res = await query(sql, [roomId]);
     return res.rows[0] || null;
   },
+
+  async createHotel({ name, city, address, rating = 4.5, image_url = null }) {
+    const sql = `
+      INSERT INTO hotels (name, city, address, rating, image_url)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `;
+    const res = await query(sql, [
+      name.trim(),
+      city.trim(),
+      address ? address.trim() : null,
+      rating,
+      image_url,
+    ]);
+    return res.rows[0];
+  },
+
+  async updateHotel(id, fields) {
+    const allowed = ['name', 'city', 'address', 'rating', 'image_url'];
+    const updates = [];
+    const values = [id];
+
+    for (const key of allowed) {
+      if (fields[key] !== undefined) {
+        values.push(fields[key]);
+        updates.push(`${key} = $${values.length}`);
+      }
+    }
+
+    if (updates.length === 0) return this.findById(id);
+
+    const sql = `UPDATE hotels SET ${updates.join(', ')} WHERE id = $1 RETURNING *`;
+    const res = await query(sql, values);
+    return res.rows[0] || null;
+  },
+
+  async deleteHotel(id) {
+    const res = await query('DELETE FROM hotels WHERE id = $1 RETURNING id', [id]);
+    return res.rowCount > 0;
+  },
+
+  async createRoom({ hotel_id, type, price_per_night, rooms_total }) {
+    const sql = `
+      INSERT INTO rooms (hotel_id, type, price_per_night, rooms_total)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `;
+    const res = await query(sql, [hotel_id, type.trim(), price_per_night, rooms_total]);
+    return res.rows[0];
+  },
+
+  async updateRoom(id, fields) {
+    const allowed = ['type', 'price_per_night', 'rooms_total'];
+    const updates = [];
+    const values = [id];
+
+    for (const key of allowed) {
+      if (fields[key] !== undefined) {
+        values.push(fields[key]);
+        updates.push(`${key} = $${values.length}`);
+      }
+    }
+
+    if (updates.length === 0) return this.findRoomById(id);
+
+    const sql = `UPDATE rooms SET ${updates.join(', ')} WHERE id = $1 RETURNING *`;
+    const res = await query(sql, values);
+    return res.rows[0] || null;
+  },
+
+  async deleteRoom(id) {
+    const res = await query('DELETE FROM rooms WHERE id = $1 RETURNING id', [id]);
+    return res.rowCount > 0;
+  },
 };

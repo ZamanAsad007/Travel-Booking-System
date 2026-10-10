@@ -179,4 +179,123 @@ export const catalogController = {
       next(error);
     }
   },
+
+  // Admin Controllers
+  async createFlight(req, res, next) {
+    try {
+      const flight = await catalogService.createFlight(req.body);
+      res.status(201).json({
+        success: true,
+        data: { flight },
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async updateFlight(req, res, next) {
+    try {
+      const flight = await catalogService.updateFlight(req.params.id, req.body);
+      res.status(200).json({
+        success: true,
+        data: { flight },
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async deleteFlight(req, res, next) {
+    try {
+      await catalogService.deleteFlight(req.params.id);
+      res.status(200).json({
+        success: true,
+        data: { message: 'Flight deleted successfully' },
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async createHotel(req, res, next) {
+    try {
+      const hotel = await catalogService.createHotel(req.body);
+      res.status(201).json({
+        success: true,
+        data: { hotel },
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async updateHotel(req, res, next) {
+    try {
+      const hotel = await catalogService.updateHotel(req.params.id, req.body);
+      res.status(200).json({
+        success: true,
+        data: { hotel },
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async deleteHotel(req, res, next) {
+    try {
+      await catalogService.deleteHotel(req.params.id);
+      res.status(200).json({
+        success: true,
+        data: { message: 'Hotel deleted successfully' },
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async createRoom(req, res, next) {
+    try {
+      const hotel_id = req.params.hotelId || req.body.hotel_id;
+      const room = await catalogService.createRoom({ ...req.body, hotel_id });
+      res.status(201).json({
+        success: true,
+        data: { room },
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async updateRoom(req, res, next) {
+    try {
+      const room = await catalogService.updateRoom(req.params.id, req.body);
+      res.status(200).json({
+        success: true,
+        data: { room },
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async deleteRoom(req, res, next) {
+    try {
+      await catalogService.deleteRoom(req.params.id);
+      res.status(200).json({
+        success: true,
+        data: { message: 'Room deleted successfully' },
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

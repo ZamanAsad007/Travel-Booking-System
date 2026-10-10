@@ -88,4 +88,65 @@ export const flightRepository = {
     const res = await query(sql, [id]);
     return res.rows[0] || null;
   },
+
+  async create({
+    flight_number,
+    airline,
+    origin,
+    destination,
+    departs_at,
+    arrives_at,
+    price,
+    seats_total,
+  }) {
+    const sql = `
+      INSERT INTO flights (flight_number, airline, origin, destination, departs_at, arrives_at, price, seats_total)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `;
+    const res = await query(sql, [
+      flight_number.trim(),
+      airline.trim(),
+      origin.toUpperCase().trim(),
+      destination.toUpperCase().trim(),
+      departs_at,
+      arrives_at,
+      price,
+      seats_total,
+    ]);
+    return res.rows[0];
+  },
+
+  async update(id, fields) {
+    const allowed = [
+      'flight_number',
+      'airline',
+      'origin',
+      'destination',
+      'departs_at',
+      'arrives_at',
+      'price',
+      'seats_total',
+    ];
+    const updates = [];
+    const values = [id];
+
+    for (const key of allowed) {
+      if (fields[key] !== undefined) {
+        values.push(fields[key]);
+        updates.push(`${key} = $${values.length}`);
+      }
+    }
+
+    if (updates.length === 0) return this.findById(id);
+
+    const sql = `UPDATE flights SET ${updates.join(', ')} WHERE id = $1 RETURNING *`;
+    const res = await query(sql, values);
+    return res.rows[0] || null;
+  },
+
+  async delete(id) {
+    const res = await query('DELETE FROM flights WHERE id = $1 RETURNING id', [id]);
+    return res.rowCount > 0;
+  },
 };

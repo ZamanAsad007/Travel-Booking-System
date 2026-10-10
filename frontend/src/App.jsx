@@ -12,6 +12,7 @@ import HotelDetailPage from './pages/HotelDetailPage.jsx';
 import CheckoutPage from './pages/CheckoutPage.jsx';
 import BookingsPage from './pages/BookingsPage.jsx';
 import BookingDetailPage from './pages/BookingDetailPage.jsx';
+import AdminDashboardPage from './pages/AdminDashboardPage.jsx';
 import ProtectedRoute from './routes/ProtectedRoute.jsx';
 
 export default function App() {
@@ -46,6 +47,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <BookingDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <AdminDashboardPage />
               </ProtectedRoute>
             }
           />
