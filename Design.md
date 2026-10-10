@@ -53,6 +53,11 @@ flowchart LR
     MQ --> BOOK
     MQ --> CAT
     MQ --> NOTIF[Notification Service]
+    GW --> ENG[Engagement Service - extended]
+    MQ --> ENG
+    ENG -- publish events --> MQ
+    ENG --> DB6[(engagement_db)]
+    AUTH -- user.registered --> MQ
     AUTH --> DB1[(auth_db)]
     CAT --> DB2[(catalog_db)]
     CAT --> REDIS[(Redis)]
@@ -69,7 +74,8 @@ flowchart LR
 | **catalog-service** | Flights/hotels search, availability, seat/room holds | `flights`, `hotels`, `rooms`, `inventory` |
 | **booking-service** | Create/cancel bookings, booking state machine, saga coordinator | `bookings`, `booking_items` |
 | **payment-service** | Mock payment processing, refunds | `payments` |
-| **notification-service** | Consume events, send/log emails, store history | `notifications` |
+| **notification-service** | Consume events, send/log emails, e-ticket PDFs, real-time SSE stream, store history | `notifications` |
+| **engagement-service** *(extended)* | Wishlist, reviews & ratings, price alerts, loyalty points | `wishlist`, `reviews`, `price_alerts`, `loyalty_accounts`, `loyalty_ledger` |
 
 **Rules**
 - A service never reads another service's database. It uses HTTP or events.
@@ -475,6 +481,288 @@ feat(observability): add Prometheus metrics and Grafana dashboards
 
 ---
 
+## 11.1 Extended Features (post v1.0.0)
+
+> Do these **only after** the core system (phases 0-11) works and is tagged `v1.0.0`. Each phase is independent, so pick by value and time. Priority: **High** = best portfolio/learning payoff, **Med** = nice to have, **Low** = if you have spare time.
+
+| Feature | Service(s) | Priority | What you learn |
+|---|---|---|---|
+| Roles & admin dashboard | auth, catalog, booking, frontend | High | RBAC, protected routes, aggregation queries |
+| Multi-passenger + e-ticket PDF with QR | booking, notification | High | Complex forms, file generation, email attachments |
+| Coupons & dynamic pricing | booking | Med | Business rules, validation, price calculation |
+| Real-time status updates (SSE) | notification, gateway, frontend | High | Streaming, proxy config, replacing polling |
+| Wishlist + reviews & ratings | engagement, catalog | Med | New service, event-driven denormalization |
+| Price alerts | engagement, catalog, notification | Med | Scheduled jobs, event chains |
+| Loyalty points | engagement, booking | Med | Ledger pattern, eventual consistency |
+| Reliability pack (outbox, DLQ, rate limit, refresh tokens) | all | High | Production-grade patterns |
+| Search upgrade + trip bundles | catalog, frontend | Med | Redis caching, autocomplete, composite offers |
+
+### New Data Models
+
+**auth_db:** `refresh_tokens(id, user_id, token_hash, expires_at, revoked_at)`; `users.role` (`USER` | `ADMIN`)
+
+**booking_db**
+```
+travelers(id, booking_id FK, full_name, passport_no, date_of_birth, seat_no)
+coupons(id, code UNIQUE, type 'PERCENT'|'FLAT', value, min_amount, max_uses, used_count, valid_from, valid_to, active)
+coupon_redemptions(id, coupon_id, booking_id, user_id, discount_amount)
+outbox(id, event_type, payload JSONB, created_at, published_at)
+bookings: + coupon_code, discount_amount, ticket_number
+```
+
+**engagement_db**
+```
+wishlist(id, user_id, item_type, item_id, created_at, UNIQUE(user_id, item_type, item_id))
+reviews(id, user_id, item_type, item_id, booking_id, rating 1-5, comment, created_at, UNIQUE(user_id, booking_id))
+completed_trips(user_id, booking_id, item_type, item_id)      -- filled from booking.confirmed events
+price_alerts(id, user_id, item_type, item_id, target_price, status 'ACTIVE'|'TRIGGERED'|'CANCELLED')
+loyalty_accounts(user_id PK, points_balance, tier)
+loyalty_ledger(id, user_id, booking_id, points, reason, created_at)
+processed_events(event_id PK, processed_at)
+```
+
+**catalog_db:** `flights/hotels` + `avg_rating`, `review_count` (denormalized, updated from `review.created`); `price_history(id, item_type, item_id, price, changed_at)`
+
+### New API Endpoints
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/api/auth/refresh` | cookie/token | Rotate access token |
+| POST | `/api/auth/logout` | user | Revoke refresh token |
+| POST/PUT/DELETE | `/api/admin/flights`, `/api/admin/hotels` | admin | Manage inventory |
+| GET | `/api/admin/stats` | admin | Bookings, revenue, top routes |
+| GET | `/api/admin/bookings` | admin | All bookings with filters |
+| POST | `/api/coupons/validate` | user | Check coupon against a cart |
+| POST/PUT/DELETE | `/api/admin/coupons` | admin | Manage coupons |
+| GET | `/api/bookings/:id/ticket` | user | Download e-ticket PDF |
+| GET | `/api/stream/bookings` | user | SSE stream of booking status changes |
+| GET/POST/DELETE | `/api/wishlist` | user | Manage wishlist |
+| GET/POST | `/api/reviews?itemType=&itemId=` | user | List / add reviews (verified travelers only) |
+| GET/POST/DELETE | `/api/price-alerts` | user | Manage price alerts |
+| GET | `/api/loyalty/me` | user | Points balance + history |
+| GET | `/api/catalog/suggest?q=` | public | Autocomplete for cities/airports |
+| GET | `/api/catalog/bundles?from=&to=&date=` | public | Flight + hotel package offers |
+
+### New Events
+
+| Event | Published by | Consumed by |
+|---|---|---|
+| `user.registered` | auth | notification (welcome email), engagement (create loyalty account) |
+| `review.created` | engagement | catalog (update avg rating) |
+| `price.changed` | catalog | engagement (check alerts) |
+| `price.alert.triggered` | engagement | notification |
+| `loyalty.points.earned` | engagement | notification |
+| `booking.ticket.issued` | booking | notification (attach PDF) |
+
+---
+
+### Phase 13: Roles & Admin Dashboard
+**Do**
+- Add `role` to JWT, `requireRole('ADMIN')` middleware in every service
+- Admin endpoints: CRUD for flights/hotels/rooms, list all bookings, stats (total bookings, revenue, top routes via SQL aggregates)
+- React: `/admin` area with tables, forms, and simple charts (Recharts)
+- Seed one admin user
+
+**Commit**
+```
+feat(auth): add role-based access control and admin seed user
+```
+```
+feat(admin): add admin APIs for inventory, bookings, and stats
+```
+```
+feat(frontend): add admin dashboard with inventory management and charts
+```
+
+---
+
+### Phase 14: Travelers & E-Ticket PDF
+**Do**
+- Booking accepts a list of travelers (name, passport, DOB); validate with Zod; price = unit price x travelers
+- Generate `ticketNumber` on confirm, publish `booking.ticket.issued`
+- Notification service builds a PDF (`pdfkit`) with a QR code (`qrcode`) and attaches it to the email
+- Endpoint to download the ticket; frontend "Download ticket" button
+
+**Commit**
+```
+feat(booking): support multiple travelers per booking
+```
+```
+feat(notification): generate e-ticket PDF with QR code and attach to email
+```
+```
+feat(frontend): add traveler form and ticket download
+```
+
+---
+
+### Phase 15: Coupons & Dynamic Pricing
+**Do**
+- Coupon table + admin CRUD; `POST /coupons/validate` returns discount preview
+- Rules: percent/flat, min amount, validity window, max uses, one use per user
+- Apply coupon inside booking creation in a DB transaction (increment `used_count` safely)
+- Optional: weekend/peak-season surcharge as a pure function `calculatePrice(item, dates, travelers)` with unit tests
+- Release the coupon use if the booking is cancelled due to payment failure
+
+**Commit**
+```
+feat(booking): add coupon system with validation and redemption
+```
+```
+feat(booking): add dynamic pricing rules with unit tests
+```
+```
+feat(frontend): add coupon input and price breakdown at checkout
+```
+
+---
+
+### Phase 16: Real-Time Updates (SSE)
+**Do**
+- Notification service exposes `GET /stream/bookings` (Server-Sent Events); it consumes booking events and pushes them to connected users
+- Nginx: `proxy_buffering off; proxy_read_timeout 1h;` for the stream route
+- Frontend: `EventSource` hook replaces polling on the booking status page and shows toast notifications
+- Fallback to polling if the stream disconnects
+
+**Commit**
+```
+feat(notification): add SSE stream for live booking updates
+```
+```
+feat(frontend): replace polling with real-time booking status via SSE
+```
+
+---
+
+### Phase 17: Engagement Service (Wishlist + Reviews)
+**Do**
+- New `engagement-service` with its own Dockerfile, DB, and compose entry
+- Wishlist CRUD; show a heart icon on search results
+- Reviews: only users with a confirmed trip can review (verified from `completed_trips`, filled by consuming `booking.confirmed`, so no cross-DB reads)
+- Publish `review.created`; catalog updates `avg_rating` and `review_count`
+- Frontend: star rating component, review list, wishlist page
+
+**Commit**
+```
+feat(engagement): scaffold engagement service with wishlist API
+```
+```
+feat(engagement): add verified reviews and publish review.created
+```
+```
+feat(catalog): update average ratings from review events
+```
+```
+feat(frontend): add wishlist and reviews UI
+```
+
+---
+
+### Phase 18: Price Alerts
+**Do**
+- Catalog records `price_history` and publishes `price.changed` when an admin updates a price
+- Engagement checks active alerts for that item; if `price <= target_price`, marks `TRIGGERED` and publishes `price.alert.triggered`
+- Notification emails the user
+- Optional: `node-cron` job in catalog that simulates daily price fluctuations so alerts fire without manual edits
+- Frontend: "Set alert" button + alerts page; price history line chart on detail page
+
+**Commit**
+```
+feat(catalog): track price history and publish price.changed events
+```
+```
+feat(engagement): add price alerts with event-driven triggering
+```
+```
+feat(frontend): add price alerts page and price history chart
+```
+
+---
+
+### Phase 19: Loyalty Points
+**Do**
+- On `user.registered`, create a loyalty account; on `booking.confirmed`, add points (e.g. 1 point per 10 currency units) to an append-only **ledger**
+- On `booking.cancelled`, add a negative ledger entry (reversal)
+- Tiers (Silver/Gold) computed from lifetime points
+- Optional: redeem points as a discount at checkout (reserve points in the saga, release on failure)
+- Frontend: loyalty card on profile page with progress bar
+
+**Commit**
+```
+feat(engagement): add loyalty accounts and points ledger
+```
+```
+feat(engagement): handle booking confirmation and cancellation for points
+```
+```
+feat(frontend): add loyalty dashboard with tier progress
+```
+
+---
+
+### Phase 20: Reliability Pack
+**Do**
+- **Transactional outbox** in booking and payment: write the event to an `outbox` table in the same DB transaction as the state change; a small publisher loop sends it to RabbitMQ. This avoids "DB updated but event lost."
+- **Retry + DLQ** policy per queue (exponential backoff, max attempts, dead-letter queue, simple admin view of failed messages)
+- **Rate limiting** at Nginx (`limit_req`) plus `express-rate-limit` on login
+- **Refresh tokens** with rotation and logout revocation
+- **Graceful shutdown** (SIGTERM handling, close broker + DB connections)
+- **Chaos test script:** stop the payment container mid-booking and verify the booking recovers
+
+**Commit**
+```
+feat(booking): implement transactional outbox for reliable event publishing
+```
+```
+feat(events): add retry policy and dead-letter queues
+```
+```
+feat(auth): add refresh token rotation and logout revocation
+```
+```
+chore(gateway): add rate limiting for API and login routes
+```
+```
+test: add chaos scenario for payment service downtime
+```
+
+---
+
+### Phase 21: Search Upgrade & Trip Bundles
+**Do**
+- Cache popular searches in Redis (short TTL) and invalidate on inventory/price change
+- Autocomplete endpoint for cities/airports (prefix search with a Postgres index or trigram)
+- Sorting + filters: price range, duration, airline, rating, free cancellation
+- **Bundles:** given route + dates, return flight + hotel packages with a bundle discount; booking supports multi-item carts (already modeled by `booking_items`)
+- Frontend: filter sidebar, debounced search box, "Package deals" section
+
+**Commit**
+```
+feat(catalog): add Redis caching for search results
+```
+```
+feat(catalog): add autocomplete, sorting, and advanced filters
+```
+```
+feat(catalog): add flight + hotel bundle offers
+```
+```
+feat(frontend): add filter sidebar, autocomplete, and package deals
+```
+
+---
+
+### Suggested Order for Extended Phases
+
+1. **13** (admin), then **14** (tickets), then **16** (SSE): biggest visible wow factor
+2. **20** (reliability): strongest interview talking points
+3. **17, 18, 19** (engagement service): shows multi-service event chains
+4. **15, 21**: polish features
+
+Update the README's feature list and architecture diagram after each batch, and tag releases (`v1.1.0`, `v1.2.0`, ...).
+
+---
+
 ## 12. Suggested Timeline (~2 weeks, part-time)
 
 | Days | Phases |
@@ -486,6 +774,7 @@ feat(observability): add Prometheus metrics and Grafana dashboards
 | 10-11 | 9, 10 |
 | 12-13 | 11 (polish) |
 | 14 | Buffer / optional phase 12 |
+| After v1.0.0 | Extended phases 13-21 (about 1-2 days each; pick by priority) |
 
 **If time runs short:** merge notification into a console logger, skip Redis (use a DB `held_until` column), and skip optional phase 12. The saga flow with RabbitMQ is the part most worth keeping.
 
