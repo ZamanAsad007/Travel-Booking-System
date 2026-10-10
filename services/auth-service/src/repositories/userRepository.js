@@ -29,13 +29,14 @@ export const userRepository = {
 
   async seedAdminUser(bcrypt) {
     const adminEmail = process.env.ADMIN_SEED_EMAIL || 'admin@travel.com';
-    const adminPassword = process.env.ADMIN_SEED_PASSWORD || 'Admin123!';
+    const adminPassword = process.env.ADMIN_SEED_PASSWORD || 'admin123';
     const adminName = process.env.ADMIN_SEED_NAME || 'System Administrator';
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(adminPassword, salt);
 
     const existing = await this.findByEmail(adminEmail);
     if (!existing) {
-      const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(adminPassword, salt);
       const admin = await this.create({
         name: adminName,
         email: adminEmail,
@@ -44,7 +45,13 @@ export const userRepository = {
       });
       console.log(`[auth-service] Seeded admin user: ${adminEmail}`);
       return admin;
+    } else {
+      await query(`UPDATE users SET role = 'ADMIN', password_hash = $1 WHERE email = $2`, [
+        passwordHash,
+        adminEmail.toLowerCase().trim(),
+      ]);
+      console.log(`[auth-service] Ensured admin credentials and role for: ${adminEmail}`);
+      return existing;
     }
-    return existing;
   },
 };
