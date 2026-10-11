@@ -1,5 +1,6 @@
 import { eventBus } from '../../../../shared/events/eventBus.js';
 import { withIdempotency } from '../../../../shared/events/idempotency.js';
+import { priceAlertService } from '../services/priceAlertService.js';
 import { pool } from '../config/db.js';
 import { EVENTS } from '../../../../shared/constants/events.js';
 
@@ -28,6 +29,9 @@ export async function startEngagementConsumer() {
           );
         }
       }
+    } else if (type === EVENTS.PRICE_CHANGED) {
+      // Check active price alerts
+      await priceAlertService.handlePriceChanged(data);
     }
   };
 

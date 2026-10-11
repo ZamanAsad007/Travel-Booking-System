@@ -75,6 +75,7 @@ router.get('/flights', catalogController.searchFlights);
 router.get('/flights/:id', catalogController.getFlight);
 router.get('/hotels', catalogController.searchHotels);
 router.get('/hotels/:id', catalogController.getHotel);
+router.get('/price-history', catalogController.getPriceHistory);
 
 // Inventory holds (Redis TTL)
 router.post('/holds', validate(holdSchema), catalogController.createHold);

@@ -298,4 +298,18 @@ export const catalogController = {
       next(error);
     }
   },
+
+  async getPriceHistory(req, res, next) {
+    try {
+      const { itemType, itemId } = req.query;
+      const history = await catalogService.getPriceHistory({ itemType, itemId });
+      res.status(200).json({
+        success: true,
+        data: history,
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

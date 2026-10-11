@@ -14,6 +14,7 @@ import BookingsPage from './pages/BookingsPage.jsx';
 import BookingDetailPage from './pages/BookingDetailPage.jsx';
 import AdminDashboardPage from './pages/AdminDashboardPage.jsx';
 import WishlistPage from './pages/WishlistPage.jsx';
+import PriceAlertsPage from './pages/PriceAlertsPage.jsx';
 import ProtectedRoute from './routes/ProtectedRoute.jsx';
 
 export default function App() {
@@ -56,6 +57,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <WishlistPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/price-alerts"
+            element={
+              <ProtectedRoute>
+                <PriceAlertsPage />
               </ProtectedRoute>
             }
           />

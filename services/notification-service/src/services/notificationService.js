@@ -131,6 +131,46 @@ export const notificationService = {
         break;
       }
 
+      case EVENTS.PRICE_ALERT_TRIGGERED: {
+        subject = `Price Drop Alert: ${data.itemName || 'Your watched item'}`;
+        text = `Good news!\n\nThe price for ${data.itemName || 'your saved item'} has dropped to $${parseFloat(data.currentPrice).toFixed(2)} (your target was $${parseFloat(data.targetPrice).toFixed(2)}).\n\nBook now before prices change!`;
+        html = `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px;">
+            <h2 style="color: #059669; margin-top: 0;">📉 Price Drop Alert!</h2>
+            <p>Great news! An item you are watching has dropped to or below your target price.</p>
+            <div style="background-color: #ecfdf5; padding: 16px; border-radius: 6px; margin: 20px 0; border: 1px solid #a7f3d0;">
+              <p style="margin: 4px 0;"><strong>Item:</strong> ${data.itemName || data.itemId}</p>
+              <p style="margin: 4px 0;"><strong>Current Price:</strong> <span style="font-size: 1.25rem; font-weight: bold; color: #059669;">$${parseFloat(data.currentPrice).toFixed(2)}</span></p>
+              <p style="margin: 4px 0;"><strong>Your Target Price:</strong> $${parseFloat(data.targetPrice).toFixed(2)}</p>
+            </div>
+            <p>Visit TravelGo now to complete your booking at this discount rate!</p>
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+            <small style="color: #64748b;">Travel Booking System Local Notification Service</small>
+          </div>
+        `;
+        break;
+      }
+
+      case EVENTS.LOYALTY_POINTS_EARNED: {
+        subject = `You earned ${data.points} loyalty points!`;
+        text = `Hello,\n\nYou just earned ${data.points} TravelGo loyalty points for your booking #${data.bookingId}.\nYour new balance is ${data.newBalance} points (Tier: ${data.tier}).`;
+        html = `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px;">
+            <h2 style="color: #d97706; margin-top: 0;">⭐ Loyalty Points Earned!</h2>
+            <p>You earned <strong>${data.points} points</strong> for booking #${data.bookingId}!</p>
+            <div style="background-color: #fffbeb; padding: 16px; border-radius: 6px; margin: 20px 0; border: 1px solid #fde68a;">
+              <p style="margin: 4px 0;"><strong>Points Earned:</strong> +${data.points}</p>
+              <p style="margin: 4px 0;"><strong>Total Balance:</strong> ${data.newBalance} points</p>
+              <p style="margin: 4px 0;"><strong>Current Tier:</strong> ${data.tier}</p>
+            </div>
+            <p>Keep traveling to unlock higher tier perks and exclusive discounts!</p>
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+            <small style="color: #64748b;">Travel Booking System Local Notification Service</small>
+          </div>
+        `;
+        break;
+      }
+
       default: {
         console.warn(`[notification-service] Unrecognized event type for notification: ${type}`);
         return null;
