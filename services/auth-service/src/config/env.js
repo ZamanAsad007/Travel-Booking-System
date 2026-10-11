@@ -6,6 +6,10 @@ export const config = {
   jwtSecret:
     process.env.JWT_SECRET || 'travel_booking_super_secret_jwt_key_2026_change_in_production',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
+  jwtRefreshSecret:
+    process.env.JWT_REFRESH_SECRET || 'travel_booking_refresh_secret_key_2026_change_in_production',
+  jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   db: {
     host: process.env.POSTGRES_HOST || 'localhost',
     port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
