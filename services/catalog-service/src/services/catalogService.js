@@ -224,4 +224,15 @@ export const catalogService = {
     }
     return hotelRepository.deleteRoom(id);
   },
+
+  async updateItemRating({ itemType, itemId, rating }) {
+    if (!itemType || !itemId || rating === undefined) return null;
+    const normalizedType = itemType.toLowerCase();
+    if (normalizedType === 'flight') {
+      return flightRepository.updateRating(itemId, rating);
+    } else if (normalizedType === 'hotel') {
+      return hotelRepository.updateRating(itemId, rating);
+    }
+    return null;
+  },
 };

@@ -38,6 +38,8 @@ export const flightRepository = {
         f.arrives_at,
         f.price,
         f.seats_total,
+        COALESCE(f.avg_rating, 0)::FLOAT AS avg_rating,
+        COALESCE(f.review_count, 0)::INT AS review_count,
         f.seats_total - COALESCE((
           SELECT SUM(r.quantity) 
           FROM reservations r 
@@ -74,6 +76,8 @@ export const flightRepository = {
         f.arrives_at,
         f.price,
         f.seats_total,
+        COALESCE(f.avg_rating, 0)::FLOAT AS avg_rating,
+        COALESCE(f.review_count, 0)::INT AS review_count,
         f.seats_total - COALESCE((
           SELECT SUM(r.quantity) 
           FROM reservations r 
@@ -148,5 +152,18 @@ export const flightRepository = {
   async delete(id) {
     const res = await query('DELETE FROM flights WHERE id = $1 RETURNING id', [id]);
     return res.rowCount > 0;
+  },
+
+  async updateRating(flightId, newRating) {
+    const sql = `
+      UPDATE flights
+      SET 
+        avg_rating = ROUND(((COALESCE(avg_rating, 0) * COALESCE(review_count, 0)) + $2) / (COALESCE(review_count, 0) + 1), 2),
+        review_count = COALESCE(review_count, 0) + 1
+      WHERE id = $1
+      RETURNING id, avg_rating, review_count
+    `;
+    const res = await query(sql, [flightId, newRating]);
+    return res.rows[0] || null;
   },
 };
