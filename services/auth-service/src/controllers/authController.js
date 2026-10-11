@@ -29,6 +29,34 @@ export const authController = {
     }
   },
 
+  async refresh(req, res, next) {
+    try {
+      const { refreshToken } = req.body;
+      const result = await authService.refresh(refreshToken);
+      res.status(200).json({
+        success: true,
+        data: result,
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async logout(req, res, next) {
+    try {
+      const { refreshToken } = req.body;
+      const result = await authService.logout(refreshToken);
+      res.status(200).json({
+        success: true,
+        data: result,
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async me(req, res, next) {
     try {
       const user = await authService.getProfile(req.user.id);

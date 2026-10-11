@@ -1,4 +1,5 @@
 import { pool, query } from '../config/db.js';
+import { outboxRepository } from './outboxRepository.js';
 
 export const bookingRepository = {
   async createBooking({
@@ -90,6 +91,17 @@ export const bookingRepository = {
         }
       }
 
+      // Transactional Outbox: Write event into outbox table in same DB transaction
+      await outboxRepository.insertOutbox(client, 'booking.created', {
+        bookingId: booking.id,
+        userId: booking.user_id,
+        amount: parseFloat(booking.total_amount),
+        items: createdItems,
+        travelers: createdTravelers,
+        couponCode: booking.coupon_code || null,
+        discountAmount: parseFloat(booking.discount_amount || 0),
+      });
+
       await client.query('COMMIT');
       return {
         ...booking,
@@ -175,6 +187,33 @@ export const bookingRepository = {
       [newStatus, id]
     );
     return res.rows[0] || null;
+  },
+
+  async updateStatusWithOutbox(id, newStatus, eventType = null, eventPayload = null) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const res = await client.query(
+        `UPDATE bookings
+         SET status = $1, updated_at = NOW()
+         WHERE id = $2
+         RETURNING *`,
+        [newStatus, id]
+      );
+      const updated = res.rows[0];
+
+      if (eventType && eventPayload) {
+        await outboxRepository.insertOutbox(client, eventType, eventPayload);
+      }
+
+      await client.query('COMMIT');
+      return updated;
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   },
 
   async updateTicketNumber(id, ticketNumber) {

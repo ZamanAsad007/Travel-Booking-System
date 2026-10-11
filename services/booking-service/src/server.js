@@ -3,6 +3,7 @@ import { config } from './config/env.js';
 import { pool } from './config/db.js';
 import { runMigrations } from './migrations/migrate.js';
 import { startBookingConsumer } from './events/bookingConsumer.js';
+import { startOutboxWorker, stopOutboxWorker } from './events/outboxWorker.js';
 
 async function waitForDb(retries = 10, delay = 2000) {
   for (let i = 0; i < retries; i++) {
@@ -34,8 +35,12 @@ async function startServer() {
       console.error('[booking-service] Error starting saga event consumer:', err.message);
     });
 
+    // Start Transactional Outbox worker
+    startOutboxWorker({ intervalMs: 2000 });
+
     const shutdown = async (signal) => {
       console.log(`[booking-service] Received ${signal}. Shutting down gracefully...`);
+      stopOutboxWorker();
       server.close(async () => {
         await pool.end();
         console.log('[booking-service] Closed database connections and stopped server.');

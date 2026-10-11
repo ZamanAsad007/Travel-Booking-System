@@ -1,10 +1,27 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import { authController } from '../controllers/authController.js';
 import { validate } from '../middleware/validate.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 
 const router = Router();
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 login attempts per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    data: null,
+    error: {
+      message: 'Too many login attempts from this IP, please try again after 15 minutes',
+      code: 'TOO_MANY_REQUESTS',
+    },
+  },
+  skip: () => process.env.NODE_ENV === 'test',
+});
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -18,8 +35,14 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+const refreshSchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token is required'),
+});
+
 router.post('/register', validate(registerSchema), authController.register);
-router.post('/login', validate(loginSchema), authController.login);
+router.post('/login', loginLimiter, validate(loginSchema), authController.login);
+router.post('/refresh', validate(refreshSchema), authController.refresh);
+router.post('/logout', authController.logout);
 router.get('/me', authenticate, authController.me);
 
 export default router;
