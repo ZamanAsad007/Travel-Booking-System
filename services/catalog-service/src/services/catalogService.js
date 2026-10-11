@@ -1,7 +1,10 @@
 import { flightRepository } from '../repositories/flightRepository.js';
 import { hotelRepository } from '../repositories/hotelRepository.js';
 import { reservationRepository } from '../repositories/reservationRepository.js';
+import { priceHistoryRepository } from '../repositories/priceHistoryRepository.js';
 import { holdService } from './holdService.js';
+import { eventBus } from '../../../../shared/events/eventBus.js';
+import { EVENTS } from '../../../../shared/constants/events.js';
 
 export const catalogService = {
   async searchFlights(params) {
@@ -152,7 +155,28 @@ export const catalogService = {
       err.code = 'FLIGHT_NOT_FOUND';
       throw err;
     }
-    return flightRepository.update(id, data);
+    const updated = await flightRepository.update(id, data);
+    if (data.price !== undefined && parseFloat(data.price) !== parseFloat(existing.price)) {
+      await priceHistoryRepository.recordChange({
+        itemType: 'flight',
+        itemId: id,
+        oldPrice: parseFloat(existing.price),
+        newPrice: parseFloat(data.price),
+      });
+      try {
+        await eventBus.publish(EVENTS.PRICE_CHANGED, {
+          itemType: 'flight',
+          itemId: id,
+          itemName: `${existing.airline} ${existing.flight_number}`,
+          oldPrice: parseFloat(existing.price),
+          newPrice: parseFloat(data.price),
+          changedAt: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.warn('[catalog-service] Failed to publish price.changed event:', e.message);
+      }
+    }
+    return updated;
   },
 
   async deleteFlight(id) {
@@ -211,7 +235,31 @@ export const catalogService = {
       err.code = 'ROOM_NOT_FOUND';
       throw err;
     }
-    return hotelRepository.updateRoom(id, data);
+    const updated = await hotelRepository.updateRoom(id, data);
+    if (
+      data.price_per_night !== undefined &&
+      parseFloat(data.price_per_night) !== parseFloat(existing.price_per_night)
+    ) {
+      await priceHistoryRepository.recordChange({
+        itemType: 'hotel',
+        itemId: existing.hotel_id,
+        oldPrice: parseFloat(existing.price_per_night),
+        newPrice: parseFloat(data.price_per_night),
+      });
+      try {
+        await eventBus.publish(EVENTS.PRICE_CHANGED, {
+          itemType: 'hotel',
+          itemId: existing.hotel_id,
+          itemName: `${existing.hotel_name} (${existing.type})`,
+          oldPrice: parseFloat(existing.price_per_night),
+          newPrice: parseFloat(data.price_per_night),
+          changedAt: new Date().toISOString(),
+        });
+      } catch (e) {
+        console.warn('[catalog-service] Failed to publish price.changed event:', e.message);
+      }
+    }
+    return updated;
   },
 
   async deleteRoom(id) {
@@ -234,5 +282,15 @@ export const catalogService = {
       return hotelRepository.updateRating(itemId, rating);
     }
     return null;
+  },
+
+  async getPriceHistory({ itemType, itemId }) {
+    if (!itemType || !itemId) {
+      const err = new Error('itemType and itemId are required');
+      err.statusCode = 400;
+      err.code = 'VALIDATION_ERROR';
+      throw err;
+    }
+    return priceHistoryRepository.getHistory({ itemType, itemId });
   },
 };
