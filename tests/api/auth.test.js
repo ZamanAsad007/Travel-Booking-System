@@ -53,6 +53,20 @@ describe('Auth Service API Tests', () => {
     });
   });
 
+  describe('POST /api/auth/refresh and logout', () => {
+    test('should reject refresh without refreshToken', async () => {
+      const res = await request(app).post('/api/auth/refresh').send({});
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    test('should handle logout gracefully even without token', async () => {
+      const res = await request(app).post('/api/auth/logout').send({});
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+  });
+
   describe('Route 404 handler', () => {
     test('should return 404 on undefined routes', async () => {
       const res = await request(app).get('/api/auth/non-existent');
