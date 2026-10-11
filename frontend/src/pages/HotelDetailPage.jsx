@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { catalogApi } from '../api/catalog.js';
+import { engagementApi } from '../api/engagement.js';
 import { useAuth } from '../context/AuthContext.jsx';
-import { Hotel, Star, MapPin, CheckCircle, Bed, ArrowRight, AlertCircle } from 'lucide-react';
+import ReviewList from '../components/ReviewList.jsx';
+import { Hotel, Star, MapPin, CheckCircle, Bed, ArrowRight, AlertCircle, Heart } from 'lucide-react';
 
 export default function HotelDetailPage() {
   const { id } = useParams();
@@ -12,6 +14,38 @@ export default function HotelDetailPage() {
 
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      engagementApi.getWishlist().then((res) => {
+        if (res.success && res.data) {
+          const found = res.data.some(
+            (w) => w.item_type?.toLowerCase() === 'hotel' && w.item_id === id
+          );
+          setIsWishlisted(found);
+        }
+      }).catch(() => {});
+    }
+  }, [id, isAuthenticated]);
+
+  const handleToggleWishlist = async () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    try {
+      if (isWishlisted) {
+        await engagementApi.removeFromWishlist('hotel', id);
+        setIsWishlisted(false);
+      } else {
+        await engagementApi.addToWishlist('hotel', id);
+        setIsWishlisted(true);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['hotel', id],
@@ -85,33 +119,53 @@ export default function HotelDetailPage() {
             marginBottom: '1.5rem',
           }}
         >
-          <div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                color: '#d97706',
-                marginBottom: '0.35rem',
-              }}
-            >
-              <Star size={18} fill="#d97706" />
-              <span style={{ fontWeight: 700 }}>
-                {parseFloat(hotel.rating || 4.5).toFixed(1)} Star Luxury Accommodation
-              </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  color: '#d97706',
+                  marginBottom: '0.35rem',
+                }}
+              >
+                <Star size={18} fill="#d97706" />
+                <span style={{ fontWeight: 700 }}>
+                  {parseFloat(hotel.rating || 4.5).toFixed(1)} Star Luxury Accommodation
+                </span>
+              </div>
+              <h1 style={{ fontSize: '2rem', fontWeight: 800, margin: '0.25rem 0' }}>{hotel.name}</h1>
+              <p
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  color: 'var(--text-muted)',
+                }}
+              >
+                <MapPin size={16} />
+                <span>{hotel.city}</span>
+              </p>
             </div>
-            <h1 style={{ fontSize: '2rem', fontWeight: 800, margin: '0.25rem 0' }}>{hotel.name}</h1>
-            <p
+
+            <button
+              onClick={handleToggleWishlist}
+              className="btn btn-secondary"
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.4rem',
-                color: 'var(--text-muted)',
+                color: isWishlisted ? '#ef4444' : '#6b7280',
+                borderColor: isWishlisted ? '#fca5a5' : '#e5e7eb',
+                background: isWishlisted ? '#fef2f2' : '#fff',
+                padding: '0.5rem 1rem',
               }}
+              title={isWishlisted ? 'Saved to Wishlist' : 'Save to Wishlist'}
             >
-              <MapPin size={16} />
-              <span>{hotel.city}</span>
-            </p>
+              <Heart size={18} fill={isWishlisted ? '#ef4444' : 'none'} />
+              <span>{isWishlisted ? 'Saved' : 'Save Hotel'}</span>
+            </button>
           </div>
         </div>
 
@@ -250,6 +304,8 @@ export default function HotelDetailPage() {
           </div>
         )}
       </div>
+
+      <ReviewList itemType="hotel" itemId={id} />
     </div>
   );
 }

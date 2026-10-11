@@ -5,6 +5,7 @@ import { pool as paymentPool } from '../../services/payment-service/src/config/d
 import catalogApp from '../../services/catalog-service/src/app.js';
 import paymentApp from '../../services/payment-service/src/app.js';
 import notificationApp from '../../services/notification-service/src/app.js';
+import engagementApp from '../../services/engagement-service/src/app.js';
 
 describe('Microservices Health API Tests', () => {
   beforeAll(() => {
@@ -38,5 +39,12 @@ describe('Microservices Health API Tests', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data.service).toBe('notification-service');
+  });
+
+  test('Engagement Service GET /health returns 200 and healthy', async () => {
+    const res = await request(engagementApp).get('/health');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.service).toBe('engagement-service');
   });
 });

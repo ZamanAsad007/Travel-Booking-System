@@ -6,11 +6,15 @@ import { EVENTS } from '../../../../shared/constants/events.js';
 
 export async function startCatalogConsumer() {
   const queueName = 'catalog-service.events';
-  const routingKeys = [EVENTS.BOOKING_CONFIRMED, EVENTS.BOOKING_CANCELLED];
+  const routingKeys = [
+    EVENTS.BOOKING_CONFIRMED,
+    EVENTS.BOOKING_CANCELLED,
+    EVENTS.REVIEW_CREATED,
+  ];
 
   const handleEvent = async (event) => {
     const { type, data } = event;
-    console.log(`[catalog-service] Handling event: ${type} for booking: ${data.bookingId}`);
+    console.log(`[catalog-service] Handling event: ${type}`);
 
     if (type === EVENTS.BOOKING_CONFIRMED) {
       // Convert held inventory into permanent reservations
@@ -32,6 +36,16 @@ export async function startCatalogConsumer() {
       await catalogService.releaseHolds(data.bookingId);
       console.log(
         `[catalog-service] Released holds and cancelled reservations for booking: ${data.bookingId}`
+      );
+    } else if (type === EVENTS.REVIEW_CREATED) {
+      // Update average rating and review count
+      await catalogService.updateItemRating({
+        itemType: data.itemType,
+        itemId: data.itemId,
+        rating: data.rating,
+      });
+      console.log(
+        `[catalog-service] Updated ratings for ${data.itemType} ${data.itemId} from review event`
       );
     }
   };

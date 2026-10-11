@@ -24,6 +24,8 @@ export const hotelRepository = {
         h.city,
         h.address,
         h.rating,
+        COALESCE(h.avg_rating, h.rating)::FLOAT AS avg_rating,
+        COALESCE(h.review_count, 0)::INT AS review_count,
         h.image_url,
         MIN(r.price_per_night) AS starting_price,
         COUNT(r.id)::INT AS room_types_count
@@ -48,7 +50,7 @@ export const hotelRepository = {
 
   async findById(id) {
     const hotelSql = `
-      SELECT id, name, city, address, rating, image_url, created_at
+      SELECT id, name, city, address, rating, COALESCE(avg_rating, rating)::FLOAT AS avg_rating, COALESCE(review_count, 0)::INT AS review_count, image_url, created_at
       FROM hotels
       WHERE id = $1
       LIMIT 1
@@ -182,5 +184,19 @@ export const hotelRepository = {
   async deleteRoom(id) {
     const res = await query('DELETE FROM rooms WHERE id = $1 RETURNING id', [id]);
     return res.rowCount > 0;
+  },
+
+  async updateRating(hotelId, newRating) {
+    const sql = `
+      UPDATE hotels
+      SET 
+        avg_rating = ROUND(((COALESCE(avg_rating, rating, 4.5) * COALESCE(review_count, 0)) + $2) / (COALESCE(review_count, 0) + 1), 2),
+        rating = ROUND(((COALESCE(avg_rating, rating, 4.5) * COALESCE(review_count, 0)) + $2) / (COALESCE(review_count, 0) + 1), 1),
+        review_count = COALESCE(review_count, 0) + 1
+      WHERE id = $1
+      RETURNING id, avg_rating, rating, review_count
+    `;
+    const res = await query(sql, [hotelId, newRating]);
+    return res.rows[0] || null;
   },
 };
