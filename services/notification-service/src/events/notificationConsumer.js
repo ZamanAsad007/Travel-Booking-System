@@ -15,6 +15,8 @@ export async function startNotificationConsumer() {
     EVENTS.BOOKING_CANCELLED,
     EVENTS.PAYMENT_REFUNDED,
     EVENTS.BOOKING_TICKET_ISSUED,
+    EVENTS.PRICE_ALERT_TRIGGERED,
+    EVENTS.LOYALTY_POINTS_EARNED,
   ];
 
   const handleEvent = async (event) => {
