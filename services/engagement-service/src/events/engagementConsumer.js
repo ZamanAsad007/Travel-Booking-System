@@ -1,6 +1,7 @@
 import { eventBus } from '../../../../shared/events/eventBus.js';
 import { withIdempotency } from '../../../../shared/events/idempotency.js';
 import { priceAlertService } from '../services/priceAlertService.js';
+import { loyaltyService } from '../services/loyaltyService.js';
 import { pool } from '../config/db.js';
 import { EVENTS } from '../../../../shared/constants/events.js';
 
@@ -29,6 +30,15 @@ export async function startEngagementConsumer() {
           );
         }
       }
+
+      // Award loyalty points
+      await loyaltyService.handleBookingConfirmed(data);
+    } else if (type === EVENTS.BOOKING_CANCELLED) {
+      // Reverse loyalty points
+      await loyaltyService.handleBookingCancelled(data);
+    } else if (type === EVENTS.USER_REGISTERED) {
+      // Setup loyalty account with welcome bonus
+      await loyaltyService.handleUserRegistered(data);
     } else if (type === EVENTS.PRICE_CHANGED) {
       // Check active price alerts
       await priceAlertService.handlePriceChanged(data);

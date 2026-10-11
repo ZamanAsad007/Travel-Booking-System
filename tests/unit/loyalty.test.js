@@ -1,7 +1,18 @@
 import { jest } from '@jest/globals';
-import { computeTier, getTierDetails } from '../../services/engagement-service/src/repositories/loyaltyRepository.js';
+import {
+  computeTier,
+  getTierDetails,
+  loyaltyRepository,
+} from '../../services/engagement-service/src/repositories/loyaltyRepository.js';
+import { loyaltyService } from '../../services/engagement-service/src/services/loyaltyService.js';
+import { eventBus } from '../../shared/events/eventBus.js';
+import { EVENTS } from '../../shared/constants/events.js';
 
 describe('Loyalty Points & Tier System Unit Tests', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('computeTier', () => {
     it('should assign BRONZE for 0 to 499 lifetime points', () => {
       expect(computeTier(0)).toBe('BRONZE');
@@ -31,7 +42,6 @@ describe('Loyalty Points & Tier System Unit Tests', () => {
     });
 
     it('should calculate correct progress for SILVER tier', () => {
-      // 500 is start, 2000 is gold (range 1500). If lifetime is 1250, (1250 - 500)/1500 = 750/1500 = 50%
       const details = getTierDetails('SILVER', 1250);
       expect(details.currentTier).toBe('SILVER');
       expect(details.nextTier).toBe('GOLD');
@@ -45,6 +55,129 @@ describe('Loyalty Points & Tier System Unit Tests', () => {
       expect(details.nextTier).toBeNull();
       expect(details.pointsToNextTier).toBe(0);
       expect(details.progressPercentage).toBe(100);
+    });
+  });
+
+  describe('loyaltyService event handlers', () => {
+    it('should award points and publish loyalty.points.earned on booking.confirmed', async () => {
+      const mockResult = {
+        account: {
+          user_id: 'u-1',
+          points_balance: 150,
+          lifetime_points: 150,
+          tier: 'BRONZE',
+        },
+        ledgerEntry: {
+          id: 'led-1',
+          user_id: 'u-1',
+          points: 50,
+        },
+      };
+
+      const addLedgerSpy = jest
+        .spyOn(loyaltyRepository, 'addLedgerEntry')
+        .mockResolvedValue(mockResult);
+
+      const publishSpy = jest
+        .spyOn(eventBus, 'publish')
+        .mockResolvedValue({ eventId: 'evt-1' });
+
+      const res = await loyaltyService.handleBookingConfirmed({
+        userId: 'u-1',
+        bookingId: 'b-12345678-abcd',
+        totalAmount: 500,
+      });
+
+      expect(addLedgerSpy).toHaveBeenCalledWith({
+        userId: 'u-1',
+        bookingId: 'b-12345678-abcd',
+        points: 50, // 500 / 10
+        reason: 'Booking #b-123456 confirmed',
+      });
+
+      expect(publishSpy).toHaveBeenCalledWith(
+        EVENTS.LOYALTY_POINTS_EARNED,
+        expect.objectContaining({
+          userId: 'u-1',
+          bookingId: 'b-12345678-abcd',
+          pointsEarned: 50,
+          pointsBalance: 150,
+          tier: 'BRONZE',
+        })
+      );
+    });
+
+    it('should reverse points and publish loyalty.points.deducted on booking.cancelled', async () => {
+      jest
+        .spyOn(loyaltyRepository, 'hasBookingPoints')
+        .mockResolvedValue({ id: 'led-1', points: 50 });
+
+      const mockResult = {
+        account: {
+          user_id: 'u-1',
+          points_balance: 100,
+          lifetime_points: 150,
+          tier: 'BRONZE',
+        },
+        ledgerEntry: {
+          id: 'led-2',
+          user_id: 'u-1',
+          points: -50,
+        },
+      };
+
+      const addLedgerSpy = jest
+        .spyOn(loyaltyRepository, 'addLedgerEntry')
+        .mockResolvedValue(mockResult);
+
+      const publishSpy = jest
+        .spyOn(eventBus, 'publish')
+        .mockResolvedValue({ eventId: 'evt-2' });
+
+      await loyaltyService.handleBookingCancelled({
+        userId: 'u-1',
+        bookingId: 'b-12345678-abcd',
+      });
+
+      expect(addLedgerSpy).toHaveBeenCalledWith({
+        userId: 'u-1',
+        bookingId: 'b-12345678-abcd',
+        points: -50,
+        reason: 'Booking #b-123456 cancelled (reversal)',
+      });
+
+      expect(publishSpy).toHaveBeenCalledWith(
+        EVENTS.LOYALTY_POINTS_DEDUCTED,
+        expect.objectContaining({
+          userId: 'u-1',
+          bookingId: 'b-12345678-abcd',
+          pointsDeducted: 50,
+          pointsBalance: 100,
+          tier: 'BRONZE',
+        })
+      );
+    });
+
+    it('should create loyalty account with welcome bonus on user.registered', async () => {
+      jest.spyOn(loyaltyRepository, 'getAccount').mockResolvedValue(null);
+      const createSpy = jest
+        .spyOn(loyaltyRepository, 'createAccount')
+        .mockResolvedValue({
+          user_id: 'u-2',
+          points_balance: 100,
+          tier: 'BRONZE',
+        });
+
+      await loyaltyService.handleUserRegistered({
+        userId: 'u-2',
+        email: 'newuser@travel.com',
+      });
+
+      expect(createSpy).toHaveBeenCalledWith({
+        userId: 'u-2',
+        email: 'newuser@travel.com',
+        initialPoints: 100,
+      });
     });
   });
 });
