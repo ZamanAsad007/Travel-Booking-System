@@ -13,6 +13,7 @@ import CheckoutPage from './pages/CheckoutPage.jsx';
 import BookingsPage from './pages/BookingsPage.jsx';
 import BookingDetailPage from './pages/BookingDetailPage.jsx';
 import AdminDashboardPage from './pages/AdminDashboardPage.jsx';
+import WishlistPage from './pages/WishlistPage.jsx';
 import ProtectedRoute from './routes/ProtectedRoute.jsx';
 
 export default function App() {
@@ -47,6 +48,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <BookingDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wishlist"
+            element={
+              <ProtectedRoute>
+                <WishlistPage />
               </ProtectedRoute>
             }
           />

@@ -1,15 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { catalogApi } from '../api/catalog.js';
+import { engagementApi } from '../api/engagement.js';
 import { useAuth } from '../context/AuthContext.jsx';
-import { Plane, Calendar, Clock, Users, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import ReviewList from '../components/ReviewList.jsx';
+import { Plane, Calendar, Clock, Users, ArrowRight, ShieldCheck, AlertCircle, Heart } from 'lucide-react';
 
 export default function FlightDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [quantity, setQuantity] = useState(1);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      engagementApi.getWishlist().then((res) => {
+        if (res.success && res.data) {
+          const found = res.data.some(
+            (w) => w.item_type?.toLowerCase() === 'flight' && w.item_id === id
+          );
+          setIsWishlisted(found);
+        }
+      }).catch(() => {});
+    }
+  }, [id, isAuthenticated]);
+
+  const handleToggleWishlist = async () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    try {
+      if (isWishlisted) {
+        await engagementApi.removeFromWishlist('flight', id);
+        setIsWishlisted(false);
+      } else {
+        await engagementApi.addToWishlist('flight', id);
+        setIsWishlisted(true);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['flight', id],
@@ -101,10 +135,28 @@ export default function FlightDetailPage() {
               {flight.airline}
             </h1>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Price per ticket</span>
-            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)' }}>
-              ${parseFloat(flight.price).toFixed(2)}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button
+              onClick={handleToggleWishlist}
+              className="btn btn-secondary"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                color: isWishlisted ? '#ef4444' : '#6b7280',
+                borderColor: isWishlisted ? '#fca5a5' : '#e5e7eb',
+                background: isWishlisted ? '#fef2f2' : '#fff',
+              }}
+              title={isWishlisted ? 'Saved to Wishlist' : 'Save to Wishlist'}
+            >
+              <Heart size={18} fill={isWishlisted ? '#ef4444' : 'none'} />
+              <span>{isWishlisted ? 'Saved' : 'Save'}</span>
+            </button>
+            <div style={{ textAlign: 'right' }}>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Price per ticket</span>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)' }}>
+                ${parseFloat(flight.price).toFixed(2)}
+              </div>
             </div>
           </div>
         </div>
@@ -253,6 +305,8 @@ export default function FlightDetailPage() {
           as soon as checkout starts to prevent double booking.
         </div>
       </div>
+
+      <ReviewList itemType="flight" itemId={id} />
     </div>
   );
 }

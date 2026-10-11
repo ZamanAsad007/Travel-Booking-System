@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import { Plane, Hotel, Luggage, User, LogOut, LogIn, Shield } from 'lucide-react';
+import { Plane, Hotel, Luggage, User, LogOut, LogIn, Shield, Heart } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
@@ -33,10 +33,16 @@ export default function Navbar() {
           </NavLink>
 
           {isAuthenticated && (
-            <NavLink to="/bookings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-              <Luggage size={18} />
-              <span>My Bookings</span>
-            </NavLink>
+            <>
+              <NavLink to="/wishlist" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <Heart size={18} />
+                <span>Wishlist</span>
+              </NavLink>
+              <NavLink to="/bookings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                <Luggage size={18} />
+                <span>My Bookings</span>
+              </NavLink>
+            </>
           )}
 
           {isAdmin && (

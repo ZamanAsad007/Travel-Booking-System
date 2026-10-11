@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { catalogApi } from '../api/catalog.js';
-import { Plane, Search, Calendar, MapPin, ArrowRight, Clock, AlertCircle } from 'lucide-react';
+import { Plane, Search, Calendar, MapPin, ArrowRight, Clock, AlertCircle, Heart } from 'lucide-react';
 import { AIRPORTS } from '../constants/locations.js';
+import { engagementApi } from '../api/engagement.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function FlightSearchPage() {
+  const { isAuthenticated } = useAuth();
+  const [wishlistIds, setWishlistIds] = useState(new Set());
   const [searchParams, setSearchParams] = useSearchParams();
   const [from, setFrom] = useState(searchParams.get('from')?.toUpperCase() || '');
   const [to, setTo] = useState(searchParams.get('to')?.toUpperCase() || '');
@@ -16,6 +20,42 @@ export default function FlightSearchPage() {
     setTo(searchParams.get('to')?.toUpperCase() || '');
     setDate(searchParams.get('date') || '');
   }, [searchParams]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      engagementApi.getWishlist().then((res) => {
+        if (res.success && res.data) {
+          const ids = new Set(
+            res.data
+              .filter((w) => w.item_type?.toLowerCase() === 'flight')
+              .map((w) => w.item_id)
+          );
+          setWishlistIds(ids);
+        }
+      }).catch(() => {});
+    }
+  }, [isAuthenticated]);
+
+  const handleToggleWishlist = async (flightId, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) return;
+    try {
+      if (wishlistIds.has(flightId)) {
+        await engagementApi.removeFromWishlist('flight', flightId);
+        setWishlistIds((prev) => {
+          const next = new Set(prev);
+          next.delete(flightId);
+          return next;
+        });
+      } else {
+        await engagementApi.addToWishlist('flight', flightId);
+        setWishlistIds((prev) => new Set([...prev, flightId]));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [
@@ -229,13 +269,36 @@ export default function FlightSearchPage() {
                     </div>
                   </div>
 
-                  <Link
-                    to={`/flights/${flight.id}`}
-                    className={`btn ${isSoldOut ? 'btn-secondary' : 'btn-primary'}`}
-                    style={{ minWidth: '120px' }}
-                  >
-                    {isSoldOut ? 'View Flight' : 'Select Flight'}
-                  </Link>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    {isAuthenticated && (
+                      <button
+                        onClick={(e) => handleToggleWishlist(flight.id, e)}
+                        style={{
+                          background: wishlistIds.has(flight.id) ? '#fee2e2' : '#f3f4f6',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '0.6rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: wishlistIds.has(flight.id) ? '#ef4444' : '#9ca3af',
+                          transition: 'all 0.2s',
+                        }}
+                        title={wishlistIds.has(flight.id) ? 'Remove from wishlist' : 'Save to wishlist'}
+                      >
+                        <Heart size={18} fill={wishlistIds.has(flight.id) ? '#ef4444' : 'none'} />
+                      </button>
+                    )}
+
+                    <Link
+                      to={`/flights/${flight.id}`}
+                      className={`btn ${isSoldOut ? 'btn-secondary' : 'btn-primary'}`}
+                      style={{ minWidth: '120px' }}
+                    >
+                      {isSoldOut ? 'View Flight' : 'Select Flight'}
+                    </Link>
+                  </div>
                 </div>
               </div>
             );

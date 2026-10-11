@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { catalogApi } from '../api/catalog.js';
-import { Hotel, Search, MapPin, Star, AlertCircle, ArrowRight } from 'lucide-react';
+import { Hotel, Search, MapPin, Star, AlertCircle, ArrowRight, Heart } from 'lucide-react';
 import { HOTEL_CITIES } from '../constants/locations.js';
+import { engagementApi } from '../api/engagement.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function HotelSearchPage() {
+  const { isAuthenticated } = useAuth();
+  const [wishlistIds, setWishlistIds] = useState(new Set());
   const [searchParams, setSearchParams] = useSearchParams();
 
   const getNormalizedCity = (val) => {
@@ -23,6 +27,42 @@ export default function HotelSearchPage() {
     setCheckIn(searchParams.get('checkIn') || '');
     setCheckOut(searchParams.get('checkOut') || '');
   }, [searchParams]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      engagementApi.getWishlist().then((res) => {
+        if (res.success && res.data) {
+          const ids = new Set(
+            res.data
+              .filter((w) => w.item_type?.toLowerCase() === 'hotel')
+              .map((w) => w.item_id)
+          );
+          setWishlistIds(ids);
+        }
+      }).catch(() => {});
+    }
+  }, [isAuthenticated]);
+
+  const handleToggleWishlist = async (hotelId, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) return;
+    try {
+      if (wishlistIds.has(hotelId)) {
+        await engagementApi.removeFromWishlist('hotel', hotelId);
+        setWishlistIds((prev) => {
+          const next = new Set(prev);
+          next.delete(hotelId);
+          return next;
+        });
+      } else {
+        await engagementApi.addToWishlist('hotel', hotelId);
+        setWishlistIds((prev) => new Set([...prev, hotelId]));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: [
@@ -230,14 +270,37 @@ export default function HotelSearchPage() {
                   </div>
                 </div>
 
-                <Link
-                  to={`/hotels/${hotel.id}`}
-                  className="btn btn-primary"
-                  style={{ backgroundColor: 'var(--secondary)', padding: '0.5rem 1rem' }}
-                >
-                  <span>View Rooms</span>
-                  <ArrowRight size={15} />
-                </Link>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {isAuthenticated && (
+                    <button
+                      onClick={(e) => handleToggleWishlist(hotel.id, e)}
+                      style={{
+                        background: wishlistIds.has(hotel.id) ? '#fee2e2' : '#f3f4f6',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '0.5rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: wishlistIds.has(hotel.id) ? '#ef4444' : '#9ca3af',
+                        transition: 'all 0.2s',
+                      }}
+                      title={wishlistIds.has(hotel.id) ? 'Remove from wishlist' : 'Save to wishlist'}
+                    >
+                      <Heart size={18} fill={wishlistIds.has(hotel.id) ? '#ef4444' : 'none'} />
+                    </button>
+                  )}
+
+                  <Link
+                    to={`/hotels/${hotel.id}`}
+                    className="btn btn-primary"
+                    style={{ backgroundColor: 'var(--secondary)', padding: '0.5rem 1rem' }}
+                  >
+                    <span>View Rooms</span>
+                    <ArrowRight size={15} />
+                  </Link>
+                </div>
               </div>
             </div>
           ))}
