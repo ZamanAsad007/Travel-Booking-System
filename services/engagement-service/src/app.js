@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import healthRoutes from './routes/healthRoutes.js';
 import wishlistRoutes from './routes/wishlistRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { correlationMiddleware } from '../../../shared/middleware/correlationMiddleware.js';
 import { createServiceMetrics } from '../../../shared/middleware/metricsMiddleware.js';
@@ -19,6 +20,7 @@ app.use(metricsMiddleware);
 app.get('/metrics', metricsEndpoint);
 app.use(healthRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // 404 handler
 app.use((req, res) => {
