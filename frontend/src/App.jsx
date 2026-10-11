@@ -15,6 +15,7 @@ import BookingDetailPage from './pages/BookingDetailPage.jsx';
 import AdminDashboardPage from './pages/AdminDashboardPage.jsx';
 import WishlistPage from './pages/WishlistPage.jsx';
 import PriceAlertsPage from './pages/PriceAlertsPage.jsx';
+import LoyaltyPage from './pages/LoyaltyPage.jsx';
 import ProtectedRoute from './routes/ProtectedRoute.jsx';
 
 export default function App() {
@@ -65,6 +66,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <PriceAlertsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/loyalty"
+            element={
+              <ProtectedRoute>
+                <LoyaltyPage />
               </ProtectedRoute>
             }
           />
