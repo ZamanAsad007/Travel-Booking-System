@@ -48,3 +48,8 @@ Thumbs.db
 # Docker / DB data volumes
 docker-data/
 pgdata/
+
+# Documentation / Design
+[Dd]esign.md
+Design.md
+design.md
