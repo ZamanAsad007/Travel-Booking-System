@@ -5,7 +5,9 @@ import { catalogApi } from '../api/catalog.js';
 import { engagementApi } from '../api/engagement.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import ReviewList from '../components/ReviewList.jsx';
-import { Hotel, Star, MapPin, CheckCircle, Bed, ArrowRight, AlertCircle, Heart } from 'lucide-react';
+import PriceHistoryChart from '../components/PriceHistoryChart.jsx';
+import SetPriceAlertModal from '../components/SetPriceAlertModal.jsx';
+import { Hotel, Star, MapPin, CheckCircle, Bed, ArrowRight, AlertCircle, Heart, Bell } from 'lucide-react';
 
 export default function HotelDetailPage() {
   const { id } = useParams();
@@ -15,6 +17,7 @@ export default function HotelDetailPage() {
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -149,23 +152,42 @@ export default function HotelDetailPage() {
               </p>
             </div>
 
-            <button
-              onClick={handleToggleWishlist}
-              className="btn btn-secondary"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                color: isWishlisted ? '#ef4444' : '#6b7280',
-                borderColor: isWishlisted ? '#fca5a5' : '#e5e7eb',
-                background: isWishlisted ? '#fef2f2' : '#fff',
-                padding: '0.5rem 1rem',
-              }}
-              title={isWishlisted ? 'Saved to Wishlist' : 'Save to Wishlist'}
-            >
-              <Heart size={18} fill={isWishlisted ? '#ef4444' : 'none'} />
-              <span>{isWishlisted ? 'Saved' : 'Save Hotel'}</span>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              {isAuthenticated && (
+                <button
+                  onClick={() => setShowAlertModal(true)}
+                  className="btn btn-secondary"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0.5rem 1rem',
+                  }}
+                  title="Set price drop alert"
+                >
+                  <Bell size={18} />
+                  <span>Price Alert</span>
+                </button>
+              )}
+
+              <button
+                onClick={handleToggleWishlist}
+                className="btn btn-secondary"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  color: isWishlisted ? '#ef4444' : '#6b7280',
+                  borderColor: isWishlisted ? '#fca5a5' : '#e5e7eb',
+                  background: isWishlisted ? '#fef2f2' : '#fff',
+                  padding: '0.5rem 1rem',
+                }}
+                title={isWishlisted ? 'Saved to Wishlist' : 'Save to Wishlist'}
+              >
+                <Heart size={18} fill={isWishlisted ? '#ef4444' : 'none'} />
+                <span>{isWishlisted ? 'Saved' : 'Save Hotel'}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -305,7 +327,22 @@ export default function HotelDetailPage() {
         )}
       </div>
 
+      <PriceHistoryChart
+        itemType="hotel"
+        itemId={id}
+        currentPrice={hotel.rooms?.[0]?.price_per_night || 120}
+      />
+
       <ReviewList itemType="hotel" itemId={id} />
+
+      <SetPriceAlertModal
+        isOpen={showAlertModal}
+        onClose={() => setShowAlertModal(false)}
+        itemType="hotel"
+        itemId={id}
+        itemName={hotel.name}
+        currentPrice={hotel.rooms?.[0]?.price_per_night || 120}
+      />
     </div>
   );
 }

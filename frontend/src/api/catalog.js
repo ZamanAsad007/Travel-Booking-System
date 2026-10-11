@@ -13,4 +13,7 @@ export const catalogApi = {
   getHotelById: async (id) => {
     return api.get(`/catalog/hotels/${id}`);
   },
+  getPriceHistory: async (itemType, itemId) => {
+    return api.get('/catalog/price-history', { params: { itemType, itemId } });
+  },
 };

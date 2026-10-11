@@ -5,7 +5,9 @@ import { catalogApi } from '../api/catalog.js';
 import { engagementApi } from '../api/engagement.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import ReviewList from '../components/ReviewList.jsx';
-import { Plane, Calendar, Clock, Users, ArrowRight, ShieldCheck, AlertCircle, Heart } from 'lucide-react';
+import PriceHistoryChart from '../components/PriceHistoryChart.jsx';
+import SetPriceAlertModal from '../components/SetPriceAlertModal.jsx';
+import { Plane, Calendar, Clock, Users, ArrowRight, ShieldCheck, AlertCircle, Heart, Bell } from 'lucide-react';
 
 export default function FlightDetailPage() {
   const { id } = useParams();
@@ -13,6 +15,7 @@ export default function FlightDetailPage() {
   const { isAuthenticated } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [showAlertModal, setShowAlertModal] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -135,7 +138,24 @@ export default function FlightDetailPage() {
               {flight.airline}
             </h1>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {isAuthenticated && (
+              <button
+                onClick={() => setShowAlertModal(true)}
+                className="btn btn-secondary"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  fontSize: '0.875rem',
+                }}
+                title="Set price drop alert"
+              >
+                <Bell size={16} />
+                <span>Price Alert</span>
+              </button>
+            )}
+
             <button
               onClick={handleToggleWishlist}
               className="btn btn-secondary"
@@ -306,7 +326,18 @@ export default function FlightDetailPage() {
         </div>
       </div>
 
+      <PriceHistoryChart itemType="flight" itemId={id} currentPrice={flight.price} />
+
       <ReviewList itemType="flight" itemId={id} />
+
+      <SetPriceAlertModal
+        isOpen={showAlertModal}
+        onClose={() => setShowAlertModal(false)}
+        itemType="flight"
+        itemId={id}
+        itemName={`${flight.airline} Flight ${flight.flight_number}`}
+        currentPrice={flight.price}
+      />
     </div>
   );
 }
