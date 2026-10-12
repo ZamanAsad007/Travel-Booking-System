@@ -78,9 +78,7 @@ describe('Loyalty Points & Tier System Unit Tests', () => {
         .spyOn(loyaltyRepository, 'addLedgerEntry')
         .mockResolvedValue(mockResult);
 
-      const publishSpy = jest
-        .spyOn(eventBus, 'publish')
-        .mockResolvedValue({ eventId: 'evt-1' });
+      const publishSpy = jest.spyOn(eventBus, 'publish').mockResolvedValue({ eventId: 'evt-1' });
 
       const res = await loyaltyService.handleBookingConfirmed({
         userId: 'u-1',
@@ -130,9 +128,7 @@ describe('Loyalty Points & Tier System Unit Tests', () => {
         .spyOn(loyaltyRepository, 'addLedgerEntry')
         .mockResolvedValue(mockResult);
 
-      const publishSpy = jest
-        .spyOn(eventBus, 'publish')
-        .mockResolvedValue({ eventId: 'evt-2' });
+      const publishSpy = jest.spyOn(eventBus, 'publish').mockResolvedValue({ eventId: 'evt-2' });
 
       await loyaltyService.handleBookingCancelled({
         userId: 'u-1',
@@ -160,13 +156,11 @@ describe('Loyalty Points & Tier System Unit Tests', () => {
 
     it('should create loyalty account with welcome bonus on user.registered', async () => {
       jest.spyOn(loyaltyRepository, 'getAccount').mockResolvedValue(null);
-      const createSpy = jest
-        .spyOn(loyaltyRepository, 'createAccount')
-        .mockResolvedValue({
-          user_id: 'u-2',
-          points_balance: 100,
-          tier: 'BRONZE',
-        });
+      const createSpy = jest.spyOn(loyaltyRepository, 'createAccount').mockResolvedValue({
+        user_id: 'u-2',
+        points_balance: 100,
+        tier: 'BRONZE',
+      });
 
       await loyaltyService.handleUserRegistered({
         userId: 'u-2',

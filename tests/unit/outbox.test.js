@@ -25,14 +25,22 @@ describe('Transactional Outbox Unit Tests', () => {
 
     jest.spyOn(outboxRepository, 'getUnpublished').mockResolvedValue(mockEvents);
     const publishSpy = jest.spyOn(eventBus, 'publish').mockResolvedValue({ eventId: 'evt-test' });
-    const markSpy = jest.spyOn(outboxRepository, 'markPublished').mockResolvedValue({ id: 'outbox-1' });
+    const markSpy = jest
+      .spyOn(outboxRepository, 'markPublished')
+      .mockResolvedValue({ id: 'outbox-1' });
 
     const publishedCount = await processOutboxOnce(10);
 
     expect(publishedCount).toBe(2);
     expect(publishSpy).toHaveBeenCalledTimes(2);
-    expect(publishSpy).toHaveBeenCalledWith(EVENTS.BOOKING_CREATED, { bookingId: 'b-100', amount: 350 });
-    expect(publishSpy).toHaveBeenCalledWith(EVENTS.BOOKING_CONFIRMED, { bookingId: 'b-101', amount: 500 });
+    expect(publishSpy).toHaveBeenCalledWith(EVENTS.BOOKING_CREATED, {
+      bookingId: 'b-100',
+      amount: 350,
+    });
+    expect(publishSpy).toHaveBeenCalledWith(EVENTS.BOOKING_CONFIRMED, {
+      bookingId: 'b-101',
+      amount: 500,
+    });
     expect(markSpy).toHaveBeenCalledWith('outbox-1');
     expect(markSpy).toHaveBeenCalledWith('outbox-2');
   });

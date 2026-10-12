@@ -87,7 +87,9 @@ describe('Refresh Token Rotation & Revocation Unit Tests', () => {
     };
 
     jest.spyOn(refreshTokenRepository, 'findByTokenHash').mockResolvedValue(compromisedToken);
-    const revokeAllSpy = jest.spyOn(refreshTokenRepository, 'revokeAllForUser').mockResolvedValue(3);
+    const revokeAllSpy = jest
+      .spyOn(refreshTokenRepository, 'revokeAllForUser')
+      .mockResolvedValue(3);
 
     await expect(authService.refresh(rawToken)).rejects.toMatchObject({
       statusCode: 401,

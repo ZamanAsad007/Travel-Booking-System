@@ -109,7 +109,9 @@ class EventBus {
 
       queueOptions.deadLetterExchange = dlxExchange;
       queueOptions.deadLetterRoutingKey = dlRoutingKey;
-      console.log(`[EventBus] Configured DLQ '${dlqQueue}' with DLX '${dlxExchange}' for queue '${queueName}'`);
+      console.log(
+        `[EventBus] Configured DLQ '${dlqQueue}' with DLX '${dlxExchange}' for queue '${queueName}'`
+      );
     }
 
     await channel.assertQueue(queueName, queueOptions);
@@ -150,7 +152,9 @@ class EventBus {
       }
     });
 
-    console.log(`[EventBus] Subscribed to queue: ${queueName} for keys: [${keys.join(', ')}] (maxRetries: ${maxRetries})`);
+    console.log(
+      `[EventBus] Subscribed to queue: ${queueName} for keys: [${keys.join(', ')}] (maxRetries: ${maxRetries})`
+    );
   }
 
   async handleMessageFailure({

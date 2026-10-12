@@ -110,7 +110,7 @@ export const loyaltyRepository = {
       const currentLifetime = parseInt(account.lifetime_points, 10) || 0;
 
       const newBalance = Math.max(0, currentBalance + points);
-      const newLifetime = points > 0 ? (currentLifetime + points) : currentLifetime;
+      const newLifetime = points > 0 ? currentLifetime + points : currentLifetime;
       const newTier = computeTier(newLifetime);
 
       const updateRes = await client.query(

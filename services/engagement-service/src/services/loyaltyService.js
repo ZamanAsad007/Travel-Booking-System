@@ -36,7 +36,9 @@ export const loyaltyService = {
       initialPoints: 100, // Welcome bonus
     });
 
-    console.log(`[engagement-service] Loyalty account created with 100 welcome bonus for user ${userId}`);
+    console.log(
+      `[engagement-service] Loyalty account created with 100 welcome bonus for user ${userId}`
+    );
     return account;
   },
 
@@ -63,9 +65,14 @@ export const loyaltyService = {
         lifetimePoints: result.account.lifetime_points,
         tier: result.account.tier,
       });
-      console.log(`[engagement-service] Published loyalty.points.earned for booking ${bookingId}: +${earnedPoints} pts`);
+      console.log(
+        `[engagement-service] Published loyalty.points.earned for booking ${bookingId}: +${earnedPoints} pts`
+      );
     } catch (publishErr) {
-      console.error('[engagement-service] Failed to publish loyalty.points.earned:', publishErr.message);
+      console.error(
+        '[engagement-service] Failed to publish loyalty.points.earned:',
+        publishErr.message
+      );
     }
 
     return result;
@@ -78,7 +85,9 @@ export const loyaltyService = {
     // Check if points were awarded for this booking
     const originalEntry = await loyaltyRepository.hasBookingPoints(bookingId);
     if (!originalEntry) {
-      console.log(`[engagement-service] No positive points found to reverse for booking ${bookingId}`);
+      console.log(
+        `[engagement-service] No positive points found to reverse for booking ${bookingId}`
+      );
       return null;
     }
 
@@ -100,9 +109,14 @@ export const loyaltyService = {
         lifetimePoints: result.account.lifetime_points,
         tier: result.account.tier,
       });
-      console.log(`[engagement-service] Published loyalty.points.deducted for booking ${bookingId}: ${pointsToDeduct} pts`);
+      console.log(
+        `[engagement-service] Published loyalty.points.deducted for booking ${bookingId}: ${pointsToDeduct} pts`
+      );
     } catch (publishErr) {
-      console.error('[engagement-service] Failed to publish loyalty.points.deducted:', publishErr.message);
+      console.error(
+        '[engagement-service] Failed to publish loyalty.points.deducted:',
+        publishErr.message
+      );
     }
 
     return result;

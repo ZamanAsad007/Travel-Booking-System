@@ -33,7 +33,9 @@ describe('Chaos Engineering Scenario: Payment Service Downtime', () => {
     // 1. Simulating booking creation
     jest.spyOn(bookingRepository, 'createBooking').mockResolvedValue(mockBooking);
     const releaseHoldSpy = jest.spyOn(catalogClient, 'releaseHold').mockResolvedValue(true);
-    const releaseCouponSpy = jest.spyOn(couponRepository, 'releaseByBookingId').mockResolvedValue(true);
+    const releaseCouponSpy = jest
+      .spyOn(couponRepository, 'releaseByBookingId')
+      .mockResolvedValue(true);
     const updateStatusSpy = jest
       .spyOn(bookingRepository, 'updateStatus')
       .mockResolvedValue({ ...mockBooking, status: BookingStatus.CANCELLED });
@@ -43,7 +45,9 @@ describe('Chaos Engineering Scenario: Payment Service Downtime', () => {
     jest.spyOn(eventBus, 'publish').mockImplementation(async (topic) => {
       if (topic === EVENTS.BOOKING_CREATED) {
         // Payment service queue unreachable or broker connection dropped
-        const downtimeErr = new Error('Payment Service Unreachable (ECONNREFUSED: 503 Service Unavailable)');
+        const downtimeErr = new Error(
+          'Payment Service Unreachable (ECONNREFUSED: 503 Service Unavailable)'
+        );
         downtimeErr.code = 'PAYMENT_SERVICE_UNAVAILABLE';
         throw downtimeErr;
       }
@@ -84,7 +88,9 @@ describe('Chaos Engineering Scenario: Payment Service Downtime', () => {
     const updateStatusSpy = jest
       .spyOn(bookingRepository, 'updateStatus')
       .mockResolvedValue({ ...mockBooking, status: BookingStatus.CANCELLED });
-    const releaseCouponSpy = jest.spyOn(couponRepository, 'releaseByBookingId').mockResolvedValue(true);
+    const releaseCouponSpy = jest
+      .spyOn(couponRepository, 'releaseByBookingId')
+      .mockResolvedValue(true);
     const publishSpy = jest.spyOn(eventBus, 'publish').mockResolvedValue({ eventId: 'evt-cancel' });
 
     // Inspect how consumer handles payment.failed

@@ -29,7 +29,9 @@ describe('Price Alerts Event Triggering Tests', () => {
       .spyOn(priceAlertRepository, 'markTriggered')
       .mockResolvedValue({ ...activeAlert, status: 'TRIGGERED' });
 
-    const publishSpy = jest.spyOn(eventBus, 'publish').mockResolvedValue({ eventId: 'evt-alert-1' });
+    const publishSpy = jest
+      .spyOn(eventBus, 'publish')
+      .mockResolvedValue({ eventId: 'evt-alert-1' });
 
     const triggered = await priceAlertService.handlePriceChanged({
       itemType: 'flight',

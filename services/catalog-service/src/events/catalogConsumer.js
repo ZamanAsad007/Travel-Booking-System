@@ -6,11 +6,7 @@ import { EVENTS } from '../../../../shared/constants/events.js';
 
 export async function startCatalogConsumer() {
   const queueName = 'catalog-service.events';
-  const routingKeys = [
-    EVENTS.BOOKING_CONFIRMED,
-    EVENTS.BOOKING_CANCELLED,
-    EVENTS.REVIEW_CREATED,
-  ];
+  const routingKeys = [EVENTS.BOOKING_CONFIRMED, EVENTS.BOOKING_CANCELLED, EVENTS.REVIEW_CREATED];
 
   const handleEvent = async (event) => {
     const { type, data } = event;

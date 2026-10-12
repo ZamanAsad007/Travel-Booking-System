@@ -33,7 +33,9 @@ describe('Price History & Price Changed Event Tests', () => {
       .spyOn(priceHistoryRepository, 'recordChange')
       .mockResolvedValue({ id: 'ph-1' });
 
-    const publishSpy = jest.spyOn(eventBus, 'publish').mockResolvedValue({ eventId: 'evt-price-1' });
+    const publishSpy = jest
+      .spyOn(eventBus, 'publish')
+      .mockResolvedValue({ eventId: 'evt-price-1' });
 
     await catalogService.updateFlight(flightId, { price: newPrice });
 

@@ -100,7 +100,9 @@ describe('EventBus Retry Policy & DLQ Unit Tests', () => {
       routingKey: 'payment.retry',
     });
 
-    const publishSpy = jest.spyOn(eventBus, 'publish').mockResolvedValue({ eventId: 'evt-replay-1' });
+    const publishSpy = jest
+      .spyOn(eventBus, 'publish')
+      .mockResolvedValue({ eventId: 'evt-replay-1' });
 
     const replayed = await eventBus.replayFailedMessage('evt-replay-1');
     expect(replayed.id).toBe('evt-replay-1');
