@@ -4,10 +4,22 @@ import { successResponse, errorResponse } from '../../../../shared/utils/respons
 export const reviewController = {
   async getReviews(req, res) {
     try {
-      const { itemType, itemId, page, limit } = req.query;
+      const { itemType, itemId, roomIds, page, limit } = req.query;
+      let parsedRoomIds = [];
+      if (roomIds) {
+        if (Array.isArray(roomIds)) {
+          parsedRoomIds = roomIds;
+        } else if (typeof roomIds === 'string') {
+          parsedRoomIds = roomIds
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+        }
+      }
       const data = await reviewService.getReviews({
         itemType,
         itemId,
+        roomIds: parsedRoomIds,
         page: page ? parseInt(page, 10) : 1,
         limit: limit ? parseInt(limit, 10) : 10,
       });

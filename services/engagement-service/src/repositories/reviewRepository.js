@@ -1,27 +1,35 @@
 import { query } from '../config/db.js';
 
 export const reviewRepository = {
-  async findByItem({ itemType, itemId, page = 1, limit = 10 }) {
+  async findByItem({ itemType, itemId, roomIds = [], page = 1, limit = 10 }) {
     const offset = (page - 1) * limit;
+
+    const idList = [itemId];
+    if (Array.isArray(roomIds)) {
+      idList.push(...roomIds);
+    } else if (typeof roomIds === 'string') {
+      idList.push(...roomIds.split(',').map((s) => s.trim()));
+    }
+    const targetIds = [...new Set(idList.filter(Boolean))];
 
     const statsSql = `
       SELECT 
         COUNT(*)::INT AS total_reviews,
         COALESCE(ROUND(AVG(rating)::numeric, 2), 0)::FLOAT AS avg_rating
       FROM reviews
-      WHERE LOWER(item_type) = LOWER($1) AND item_id = $2
+      WHERE LOWER(item_type) = LOWER($1) AND item_id = ANY($2::text[])
     `;
-    const statsRes = await query(statsSql, [itemType, itemId]);
+    const statsRes = await query(statsSql, [itemType, targetIds]);
     const { total_reviews: total, avg_rating: avgRating } = statsRes.rows[0];
 
     const dataSql = `
       SELECT id, user_id, user_name, booking_id, item_type, item_id, rating, comment, created_at
       FROM reviews
-      WHERE LOWER(item_type) = LOWER($1) AND item_id = $2
+      WHERE LOWER(item_type) = LOWER($1) AND item_id = ANY($2::text[])
       ORDER BY created_at DESC
       LIMIT $3 OFFSET $4
     `;
-    const dataRes = await query(dataSql, [itemType, itemId, limit, offset]);
+    const dataRes = await query(dataSql, [itemType, targetIds, limit, offset]);
 
     return {
       total,

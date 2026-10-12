@@ -4,7 +4,12 @@ import { engagementApi } from '../api/engagement.js';
 import StarRating from './StarRating.jsx';
 import { MessageSquare, CheckCircle, AlertCircle, Send } from 'lucide-react';
 
-export default function ReviewList({ itemType, itemId, defaultEligibleBookingId = null }) {
+export default function ReviewList({
+  itemType,
+  itemId,
+  roomIds = [],
+  defaultEligibleBookingId = null,
+}) {
   const { isAuthenticated } = useAuth();
   const [reviewsData, setReviewsData] = useState({ total: 0, avgRating: 0, reviews: [] });
   const [loading, setLoading] = useState(true);
@@ -20,9 +25,14 @@ export default function ReviewList({ itemType, itemId, defaultEligibleBookingId 
   const fetchReviews = async () => {
     try {
       setLoading(true);
-      const res = await engagementApi.getReviews(itemType, itemId);
-      if (res.success && res.data) {
-        setReviewsData(res.data);
+      const res = await engagementApi.getReviews(itemType, itemId, 1, 10, roomIds);
+      const data = res?.data || res;
+      if (data && Array.isArray(data.reviews)) {
+        setReviewsData({
+          total: data.total !== undefined ? data.total : data.reviews.length,
+          avgRating: typeof data.avgRating === 'number' ? data.avgRating : 0,
+          reviews: data.reviews,
+        });
       }
     } catch (err) {
       console.error('Failed to load reviews:', err);
@@ -35,27 +45,28 @@ export default function ReviewList({ itemType, itemId, defaultEligibleBookingId 
     if (!isAuthenticated) return;
     try {
       const res = await engagementApi.getEligibleReviewTrips();
-      if (res.success && res.data) {
-        const matching = res.data.filter(
-          (t) =>
-            t.item_type?.toLowerCase() === itemType?.toLowerCase() &&
-            t.item_id === itemId &&
-            !t.has_reviewed
-        );
-        setEligibleTrips(matching);
-        if (matching.length > 0 && !selectedBookingId) {
-          setSelectedBookingId(matching[0].booking_id);
-        }
+      const trips = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+      const matching = trips.filter(
+        (t) =>
+          t.item_type?.toLowerCase() === itemType?.toLowerCase() &&
+          (t.item_id === itemId || (Array.isArray(roomIds) && roomIds.includes(t.item_id))) &&
+          !t.has_reviewed
+      );
+      setEligibleTrips(matching);
+      if (matching.length > 0 && !selectedBookingId) {
+        setSelectedBookingId(matching[0].booking_id);
       }
     } catch (err) {
       console.error('Failed to load eligible trips:', err);
     }
   };
 
+  const serializedRoomIds = Array.isArray(roomIds) ? roomIds.join(',') : '';
+
   useEffect(() => {
     fetchReviews();
     fetchEligibleTrips();
-  }, [itemType, itemId, isAuthenticated]);
+  }, [itemType, itemId, serializedRoomIds, isAuthenticated]);
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
@@ -64,13 +75,16 @@ export default function ReviewList({ itemType, itemId, defaultEligibleBookingId 
       return;
     }
 
+    const selectedTrip = eligibleTrips.find((t) => t.booking_id === selectedBookingId);
+    const targetItemId = selectedTrip?.item_id || itemId;
+
     try {
       setSubmitting(true);
       setError(null);
       await engagementApi.createReview({
         bookingId: selectedBookingId,
         itemType,
-        itemId,
+        itemId: targetItemId,
         rating,
         comment,
       });
@@ -80,7 +94,7 @@ export default function ReviewList({ itemType, itemId, defaultEligibleBookingId 
       fetchReviews();
       fetchEligibleTrips();
     } catch (err) {
-      setError(err.response?.data?.error?.message || 'Failed to submit review');
+      setError(err?.message || err?.response?.data?.error?.message || 'Failed to submit review');
     } finally {
       setSubmitting(false);
     }

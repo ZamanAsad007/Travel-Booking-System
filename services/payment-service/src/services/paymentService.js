@@ -10,6 +10,15 @@ export const paymentService = {
       `[payment-service] Processing mock payment for booking ${bookingId} ($${amount})...`
     );
 
+    // Prevent duplicate payment processing for the same booking
+    const existingPayment = await paymentRepository.findLatestByBookingId(bookingId);
+    if (existingPayment) {
+      console.log(
+        `[payment-service] Payment already processed for booking ${bookingId} (status: ${existingPayment.status}), skipping duplicate.`
+      );
+      return existingPayment;
+    }
+
     // Simulate real gateway processing delay
     await new Promise((resolve) => setTimeout(resolve, 300));
 

@@ -3,14 +3,14 @@ import { eventBus } from '../../../../shared/events/eventBus.js';
 import { EVENTS } from '../../../../shared/constants/events.js';
 
 export const reviewService = {
-  async getReviews({ itemType, itemId, page, limit }) {
+  async getReviews({ itemType, itemId, roomIds = [], page, limit }) {
     if (!itemType || !itemId) {
       const err = new Error('itemType and itemId query parameters are required');
       err.statusCode = 400;
       err.code = 'VALIDATION_ERROR';
       throw err;
     }
-    return reviewRepository.findByItem({ itemType, itemId, page, limit });
+    return reviewRepository.findByItem({ itemType, itemId, roomIds, page, limit });
   },
 
   async createReview({ userId, userName, bookingId, itemType, itemId, rating, comment }) {
