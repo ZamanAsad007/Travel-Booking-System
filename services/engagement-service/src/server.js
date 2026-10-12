@@ -2,6 +2,7 @@ import app from './app.js';
 import { config } from './config/env.js';
 import { pool } from './config/db.js';
 import { runMigrations } from './migrations/migrate.js';
+import { seedEngagementData } from './seeds/seed.js';
 import { startEngagementConsumer } from './events/engagementConsumer.js';
 
 import pg from 'pg';
@@ -62,6 +63,9 @@ async function startServer() {
   try {
     await waitForDb();
     await runMigrations();
+    await seedEngagementData().catch((err) => {
+      console.warn('[engagement-service] Error during initial review seeding:', err.message);
+    });
 
     const server = app.listen(config.port, () => {
       console.log(`[engagement-service] Running on port ${config.port}`);

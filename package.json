@@ -16,7 +16,7 @@
     "up": "docker compose up -d",
     "down": "docker compose down",
     "build": "docker compose up --build -d",
-    "seed": "docker compose exec catalog-service node src/seeds/seed.js",
+    "seed": "docker compose exec catalog-service node src/seeds/seed.js && docker compose exec engagement-service node src/seeds/seed.js",
     "logs": "docker compose logs -f"
   },
   "devDependencies": {
