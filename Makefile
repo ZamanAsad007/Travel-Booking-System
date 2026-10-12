@@ -20,6 +20,7 @@ ps:
 
 seed:
 	docker compose exec catalog-service node src/seeds/seed.js
+	docker compose exec engagement-service node src/seeds/seed.js
 
 clean:
 	docker compose down -v --remove-orphans

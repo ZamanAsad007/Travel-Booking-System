@@ -14,4 +14,6 @@ export const HOTEL_CITIES = [
   { value: 'New York', label: 'New York, United States' },
   { value: 'Paris', label: 'Paris, France' },
   { value: 'Tokyo', label: 'Tokyo, Japan' },
+  { value: 'Dubai', label: 'Dubai, United Arab Emirates' },
+  { value: 'Singapore', label: 'Singapore' },
 ];
