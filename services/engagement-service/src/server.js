@@ -4,6 +4,38 @@ import { pool } from './config/db.js';
 import { runMigrations } from './migrations/migrate.js';
 import { startEngagementConsumer } from './events/engagementConsumer.js';
 
+import pg from 'pg';
+const { Client } = pg;
+
+async function ensureDatabase() {
+  const adminClient = new Client({
+    host: config.db.host,
+    port: config.db.port,
+    user: config.db.user,
+    password: config.db.password,
+    database: 'postgres',
+  });
+
+  try {
+    await adminClient.connect();
+    const res = await adminClient.query('SELECT 1 FROM pg_database WHERE datname = $1', [
+      config.db.database,
+    ]);
+    if (res.rowCount === 0) {
+      console.log(
+        `[engagement-service] Database "${config.db.database}" does not exist. Creating...`
+      );
+      const safeDbName = config.db.database.replace(/[^a-zA-Z0-9_]/g, '');
+      await adminClient.query(`CREATE DATABASE "${safeDbName}"`);
+      console.log(`[engagement-service] Database "${safeDbName}" created successfully.`);
+    }
+  } catch (err) {
+    console.error('[engagement-service] Failed to ensure database exists:', err.message);
+  } finally {
+    await adminClient.end().catch(() => {});
+  }
+}
+
 async function waitForDb(retries = 10, delay = 2000) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -11,6 +43,12 @@ async function waitForDb(retries = 10, delay = 2000) {
       console.log('[engagement-service] Connected to PostgreSQL database.');
       return;
     } catch (err) {
+      if (err.code === '3D000' || err.message?.includes('does not exist')) {
+        console.log(
+          `[engagement-service] Database "${config.db.database}" missing, attempting auto-creation...`
+        );
+        await ensureDatabase();
+      }
       console.log(
         `[engagement-service] Database connection attempt ${i + 1}/${retries} failed: ${err.message}. Retrying in ${delay / 1000}s...`
       );
