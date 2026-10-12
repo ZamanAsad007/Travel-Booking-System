@@ -3,72 +3,63 @@ import client from './client.js';
 export const engagementApi = {
   // Wishlist APIs
   async getWishlist() {
-    const res = await client.get('/wishlist');
-    return res.data;
+    return client.get('/wishlist');
   },
 
   async addToWishlist(itemType, itemId) {
-    const res = await client.post('/wishlist', { itemType, itemId });
-    return res.data;
+    return client.post('/wishlist', { itemType, itemId });
   },
 
   async removeFromWishlist(itemType, itemId, id = null) {
     if (id) {
-      const res = await client.delete(`/wishlist/${id}`);
-      return res.data;
+      return client.delete(`/wishlist/${id}`);
     }
-    const res = await client.delete('/wishlist', { params: { itemType, itemId } });
-    return res.data;
+    return client.delete('/wishlist', { params: { itemType, itemId } });
   },
 
   // Reviews APIs
-  async getReviews(itemType, itemId, page = 1, limit = 10) {
-    const res = await client.get('/reviews', {
-      params: { itemType, itemId, page, limit },
-    });
-    return res.data;
+  async getReviews(itemType, itemId, page = 1, limit = 10, roomIds = []) {
+    const params = { itemType, itemId, page, limit };
+    if (roomIds && roomIds.length > 0) {
+      params.roomIds = Array.isArray(roomIds) ? roomIds.join(',') : roomIds;
+    }
+    return client.get('/reviews', { params });
   },
 
   async createReview({ bookingId, itemType, itemId, rating, comment }) {
-    const res = await client.post('/reviews', {
+    return client.post('/reviews', {
       bookingId,
       itemType,
       itemId,
       rating,
       comment,
     });
-    return res.data;
   },
 
   async getEligibleReviewTrips() {
-    const res = await client.get('/reviews/eligible');
-    return res.data;
+    return client.get('/reviews/eligible');
   },
 
   // Price Alerts APIs (Phase 18)
   async getPriceAlerts() {
-    const res = await client.get('/price-alerts');
-    return res.data;
+    return client.get('/price-alerts');
   },
 
   async createPriceAlert({ itemType, itemId, itemName, targetPrice }) {
-    const res = await client.post('/price-alerts', {
+    return client.post('/price-alerts', {
       itemType,
       itemId,
       itemName,
       targetPrice,
     });
-    return res.data;
   },
 
   async deletePriceAlert(id) {
-    const res = await client.delete(`/price-alerts/${id}`);
-    return res.data;
+    return client.delete(`/price-alerts/${id}`);
   },
 
   // Loyalty Points APIs (Phase 19)
   async getLoyaltyProfile() {
-    const res = await client.get('/loyalty/me');
-    return res.data;
+    return client.get('/loyalty/me');
   },
 };

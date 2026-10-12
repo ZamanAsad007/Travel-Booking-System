@@ -23,6 +23,7 @@ export async function seedEngagementData() {
 
     let flights = [];
     let hotels = [];
+    let rooms = [];
 
     try {
       await catalogClient.connect();
@@ -33,6 +34,9 @@ export async function seedEngagementData() {
 
       const hotelsRes = await catalogClient.query('SELECT id, name, city FROM hotels');
       hotels = hotelsRes.rows;
+
+      const roomsRes = await catalogClient.query('SELECT id, hotel_id, type FROM rooms');
+      rooms = roomsRes.rows;
     } catch (err) {
       console.warn(
         '[engagement-service] Direct catalog_db query failed, attempting HTTP fallback:',
@@ -217,6 +221,57 @@ export async function seedEngagementData() {
           );
           reviewsInserted++;
         }
+      }
+    }
+
+    // Customer Room Review Templates
+    const roomReviewTemplates = [
+      {
+        rating: 5,
+        comment:
+          'The room was incredibly spacious with spotless amenities, super soft bedding, and fantastic soundproofing.',
+      },
+      {
+        rating: 4,
+        comment:
+          'Loved the comfortable mattress, high-speed WiFi, and fast room service. Great value for the stay!',
+      },
+      {
+        rating: 5,
+        comment:
+          'Stunning view from the room window, modern bathroom, and peaceful atmosphere. Highly recommended!',
+      },
+    ];
+
+    // Seed Room Reviews
+    for (let rIdx = 0; rIdx < rooms.length; rIdx++) {
+      const room = rooms[rIdx];
+      const countRes = await engagementClient.query(
+        `SELECT COUNT(*) FROM reviews WHERE LOWER(item_type) = 'hotel' AND item_id = $1`,
+        [room.id]
+      );
+      const existingCount = parseInt(countRes.rows[0].count, 10);
+
+      if (existingCount < 1) {
+        const rev = roomReviewTemplates[rIdx % roomReviewTemplates.length];
+        const userName = reviewerNames[(rIdx + 5) % reviewerNames.length];
+        const userId = crypto.randomUUID();
+        const bookingId = crypto.randomUUID();
+
+        await engagementClient.query(
+          `INSERT INTO completed_trips (user_id, booking_id, item_type, item_id, completed_at)
+           VALUES ($1, $2, 'hotel', $3, NOW() - INTERVAL '${((rIdx % 10) + 1) * 2} days')
+           ON CONFLICT (user_id, booking_id, item_type, item_id) DO NOTHING`,
+          [userId, bookingId, room.id]
+        );
+
+        await engagementClient.query(
+          `INSERT INTO reviews (user_id, user_name, booking_id, item_type, item_id, rating, comment, created_at)
+           VALUES ($1, $2, $3, 'hotel', $4, $5, $6, NOW() - INTERVAL '${((rIdx % 10) + 1) * 2} days')
+           ON CONFLICT (user_id, booking_id, item_id) DO NOTHING`,
+          [userId, userName, bookingId, room.id, rev.rating, rev.comment]
+        );
+        reviewsInserted++;
       }
     }
 

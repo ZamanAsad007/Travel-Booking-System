@@ -333,7 +333,11 @@ export default function HotelDetailPage() {
         currentPrice={hotel.rooms?.[0]?.price_per_night || 120}
       />
 
-      <ReviewList itemType="hotel" itemId={id} />
+      <ReviewList
+        itemType="hotel"
+        itemId={id}
+        roomIds={hotel.rooms?.map((r) => r.id) || []}
+      />
 
       <SetPriceAlertModal
         isOpen={showAlertModal}
