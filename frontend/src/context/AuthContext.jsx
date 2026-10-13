@@ -42,6 +42,19 @@ export function AuthProvider({ children }) {
     return receivedUser;
   };
 
+  const updateProfile = async (profileData) => {
+    const res = await authApi.updateProfile(profileData);
+    const { token: receivedToken, user: updatedUser } = res.data;
+    if (receivedToken) {
+      localStorage.setItem('token', receivedToken);
+      setToken(receivedToken);
+    }
+    if (updatedUser) {
+      setUser(updatedUser);
+    }
+    return updatedUser;
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
@@ -49,7 +62,19 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        setUser,
+        token,
+        loading,
+        login,
+        register,
+        updateProfile,
+        logout,
+        isAuthenticated: !!user,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
