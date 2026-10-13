@@ -1,6 +1,8 @@
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import { jest } from '@jest/globals';
 import { pool } from '../../services/auth-service/src/config/db.js';
+import { config } from '../../services/auth-service/src/config/env.js';
 import app from '../../services/auth-service/src/app.js';
 
 describe('Auth Service API Tests', () => {
@@ -64,6 +66,37 @@ describe('Auth Service API Tests', () => {
       const res = await request(app).post('/api/auth/logout').send({});
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
+    });
+  });
+
+  describe('PUT /api/auth/profile and GET /api/auth/profile', () => {
+    const validToken = jwt.sign(
+      { id: 'u-1', email: 'test@example.com', name: 'Test', role: 'USER' },
+      config.jwtSecret
+    );
+
+    test('should reject profile update without token', async () => {
+      const res = await request(app).put('/api/auth/profile').send({ name: 'Updated Name' });
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
+
+    test('should reject profile update with invalid email', async () => {
+      const res = await request(app)
+        .put('/api/auth/profile')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({ email: 'not-valid-email' });
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    test('should reject profile update when name is less than 2 characters', async () => {
+      const res = await request(app)
+        .put('/api/auth/profile')
+        .set('Authorization', `Bearer ${validToken}`)
+        .send({ name: 'A' });
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
     });
   });
 

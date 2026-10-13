@@ -103,6 +103,7 @@ export const authService = {
       name: user.name,
       email: user.email,
       role: (user.role || 'USER').toUpperCase(),
+      phone: user.phone || null,
       created_at: user.created_at,
     };
 
@@ -196,6 +197,68 @@ export const authService = {
       throw err;
     }
     return user;
+  },
+
+  async updateProfile(userId, { name, email, phone, currentPassword, newPassword } = {}) {
+    const user = await userRepository.findByIdWithPassword(userId);
+    if (!user) {
+      const err = new Error('User not found');
+      err.statusCode = 404;
+      err.code = 'USER_NOT_FOUND';
+      throw err;
+    }
+
+    if (email && email.toLowerCase().trim() !== user.email.toLowerCase().trim()) {
+      const existing = await userRepository.findByEmail(email);
+      if (existing && existing.id !== userId) {
+        const err = new Error('An account with this email already exists');
+        err.statusCode = 409;
+        err.code = 'EMAIL_ALREADY_EXISTS';
+        throw err;
+      }
+    }
+
+    let passwordHash = undefined;
+    if (newPassword) {
+      if (!currentPassword) {
+        const err = new Error('Current password is required to set a new password');
+        err.statusCode = 400;
+        err.code = 'CURRENT_PASSWORD_REQUIRED';
+        throw err;
+      }
+      const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+      if (!isMatch) {
+        const err = new Error('Current password is incorrect');
+        err.statusCode = 400;
+        err.code = 'INVALID_CURRENT_PASSWORD';
+        throw err;
+      }
+      const salt = await bcrypt.genSalt(10);
+      passwordHash = await bcrypt.hash(newPassword, salt);
+    }
+
+    const updatedUser = await userRepository.update(userId, {
+      name,
+      email,
+      phone,
+      passwordHash,
+    });
+
+    const safeUser = {
+      id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: (updatedUser.role || 'USER').toUpperCase(),
+      phone: updatedUser.phone || null,
+      created_at: updatedUser.created_at,
+    };
+
+    const token = this.generateAccessToken(safeUser);
+
+    return {
+      user: safeUser,
+      token,
+    };
   },
 
   async seedAdmin() {

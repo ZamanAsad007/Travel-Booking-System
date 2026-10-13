@@ -10,21 +10,61 @@ export const userRepository = {
 
   async findById(id) {
     const res = await query(
-      'SELECT id, name, email, role, created_at FROM users WHERE id = $1 LIMIT 1',
+      'SELECT id, name, email, role, phone, created_at FROM users WHERE id = $1 LIMIT 1',
       [id]
     );
     return res.rows[0] || null;
   },
 
-  async create({ name, email, passwordHash, role = 'USER' }) {
+  async findByIdWithPassword(id) {
+    const res = await query(
+      'SELECT id, name, email, password_hash, role, phone, created_at FROM users WHERE id = $1 LIMIT 1',
+      [id]
+    );
+    return res.rows[0] || null;
+  },
+
+  async create({ name, email, passwordHash, role = 'USER', phone = null }) {
     const normalizedRole = (role || 'USER').toUpperCase();
     const res = await query(
-      `INSERT INTO users (name, email, password_hash, role)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, name, email, role, created_at`,
-      [name.trim(), email.toLowerCase().trim(), passwordHash, normalizedRole]
+      `INSERT INTO users (name, email, password_hash, role, phone)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, name, email, role, phone, created_at`,
+      [name.trim(), email.toLowerCase().trim(), passwordHash, normalizedRole, phone]
     );
     return res.rows[0];
+  },
+
+  async update(id, { name, email, phone, passwordHash }) {
+    const updates = [];
+    const values = [];
+    let idx = 1;
+
+    if (name !== undefined) {
+      updates.push(`name = $${idx++}`);
+      values.push(name.trim());
+    }
+    if (email !== undefined) {
+      updates.push(`email = $${idx++}`);
+      values.push(email.toLowerCase().trim());
+    }
+    if (phone !== undefined) {
+      updates.push(`phone = $${idx++}`);
+      values.push(phone ? phone.trim() : null);
+    }
+    if (passwordHash !== undefined) {
+      updates.push(`password_hash = $${idx++}`);
+      values.push(passwordHash);
+    }
+
+    if (updates.length === 0) {
+      return this.findById(id);
+    }
+
+    values.push(id);
+    const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = $${idx} RETURNING id, name, email, role, phone, created_at`;
+    const res = await query(sql, values);
+    return res.rows[0] || null;
   },
 
   async seedAdminUser(bcrypt) {

@@ -16,6 +16,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage.jsx';
 import WishlistPage from './pages/WishlistPage.jsx';
 import PriceAlertsPage from './pages/PriceAlertsPage.jsx';
 import LoyaltyPage from './pages/LoyaltyPage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
 import ProtectedRoute from './routes/ProtectedRoute.jsx';
 
 export default function App() {
@@ -74,6 +75,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <LoyaltyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />

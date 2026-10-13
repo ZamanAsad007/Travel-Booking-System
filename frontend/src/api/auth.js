@@ -10,4 +10,7 @@ export const authApi = {
   getMe: async () => {
     return api.get('/auth/me');
   },
+  updateProfile: async (data) => {
+    return api.put('/auth/profile', data);
+  },
 };
