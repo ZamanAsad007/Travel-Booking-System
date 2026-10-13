@@ -170,7 +170,7 @@ export async function generateTicketPdf(ticketData) {
       .text(
         'Please present this electronic document and valid government photo identification at check-in or boarding. Have a safe journey!',
         50,
-        doc.page.height - 50,
+        doc.page.height - 70,
         { align: 'center', width: doc.page.width - 100 }
       );
 

@@ -214,4 +214,107 @@ describe('Booking Service API Tests', () => {
       expect(res.status).toBe(403);
     });
   });
+
+  describe('GET /api/bookings/:id/ticket/download', () => {
+    test('should reject ticket download without authentication', async () => {
+      const res = await request(app).get('/api/bookings/b1/ticket/download');
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('UNAUTHORIZED');
+    });
+
+    test('should reject ticket download for non-confirmed booking', async () => {
+      const jwt = (await import('jsonwebtoken')).default;
+      const userToken = jwt.sign(
+        { id: 'u1', role: 'USER' },
+        process.env.JWT_SECRET || 'travel_booking_super_secret_jwt_key_2026_change_in_production'
+      );
+
+      bookingPool.query.mockImplementation(async (sql) => {
+        if (typeof sql === 'string' && sql.includes('FROM bookings WHERE id = $1')) {
+          return {
+            rows: [
+              {
+                id: 'b1',
+                user_id: 'u1',
+                status: 'PENDING',
+                ticket_number: null,
+                total_amount: '150.00',
+              },
+            ],
+          };
+        }
+        return { rows: [] };
+      });
+
+      const res = await request(app)
+        .get('/api/bookings/b1/ticket/download')
+        .set('Authorization', `Bearer ${userToken}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('TICKET_NOT_AVAILABLE');
+    });
+
+    test('should return application/pdf for confirmed booking with ticket number', async () => {
+      const jwt = (await import('jsonwebtoken')).default;
+      const userToken = jwt.sign(
+        { id: 'u1', role: 'USER' },
+        process.env.JWT_SECRET || 'travel_booking_super_secret_jwt_key_2026_change_in_production'
+      );
+
+      bookingPool.query.mockImplementation(async (sql) => {
+        if (typeof sql === 'string' && sql.includes('FROM bookings WHERE id = $1')) {
+          return {
+            rows: [
+              {
+                id: 'b1',
+                user_id: 'u1',
+                status: 'CONFIRMED',
+                ticket_number: 'TKT-TEST-99',
+                total_amount: '150.00',
+              },
+            ],
+          };
+        }
+        if (typeof sql === 'string' && sql.includes('booking_items')) {
+          return {
+            rows: [
+              {
+                id: 'item1',
+                booking_id: 'b1',
+                item_type: 'flight',
+                item_id: 'f1',
+                quantity: 1,
+                unit_price: '150.00',
+              },
+            ],
+          };
+        }
+        if (typeof sql === 'string' && sql.includes('booking_travelers')) {
+          return {
+            rows: [
+              {
+                id: 't1',
+                booking_id: 'b1',
+                full_name: 'Jane Doe',
+                passport_no: 'P123',
+                date_of_birth: '1995-01-01',
+              },
+            ],
+          };
+        }
+        return { rows: [] };
+      });
+
+      const res = await request(app)
+        .get('/api/bookings/b1/ticket/download')
+        .set('Authorization', `Bearer ${userToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toBe('application/pdf');
+      expect(res.headers['content-disposition']).toContain('ticket-TKT-TEST-99.pdf');
+      expect(res.body).toBeDefined();
+    });
+  });
 });
