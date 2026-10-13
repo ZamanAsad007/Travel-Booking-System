@@ -193,7 +193,7 @@ export const bookingService = {
       throw err;
     }
 
-    if (booking.user_id !== userId && userRole !== 'admin') {
+    if (booking.user_id !== userId && (userRole || '').toLowerCase() !== 'admin') {
       const err = new Error('Access denied: You do not have permission to view this booking');
       err.statusCode = 403;
       err.code = 'FORBIDDEN';
