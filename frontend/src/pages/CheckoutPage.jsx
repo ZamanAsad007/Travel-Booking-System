@@ -66,7 +66,24 @@ export default function CheckoutPage() {
     subtitle,
     checkIn,
     checkOut,
+    items: bundleItems,
+    savings: bundleSavings = 0,
+    discountPercent: bundleDiscountPercent = 0,
   } = itemState;
+
+  // Multi-item / Bundle pricing calculation
+  const isBundle = Boolean(bundleItems && bundleItems.length > 0);
+  const baseUnitTotal = isBundle
+    ? bundleItems.reduce((acc, it) => acc + parseFloat(it.price || it.unitPrice || 0), 0)
+    : parseFloat(unitPrice || 0);
+
+  const packageDiscountPerTraveler = bundleSavings
+    ? parseFloat(bundleSavings)
+    : bundleDiscountPercent
+      ? Math.round(baseUnitTotal * (bundleDiscountPercent / 100) * 100) / 100
+      : 0;
+
+  const discountedUnitTotal = Math.max(0, baseUnitTotal - packageDiscountPerTraveler);
 
   // Dynamic pricing calculation
   const dateForPricing = checkIn || itemState.departureDate || itemState.departureTime || itemState.date;
@@ -89,7 +106,10 @@ export default function CheckoutPage() {
   })();
 
   const travelerCount = travelers.length;
-  const baseTotal = unitPrice * travelerCount;
+  const grossBaseTotal = baseUnitTotal * travelerCount;
+  const totalPackageDiscount = packageDiscountPerTraveler * travelerCount;
+  const baseTotal = discountedUnitTotal * travelerCount;
+
   const weekendSurcharge = isWeekend ? Math.round(baseTotal * 0.15 * 100) / 100 : 0;
   const peakSurcharge = peakSeason ? Math.round(baseTotal * peakSeason.rate * 100) / 100 : 0;
   const grossSubtotal = baseTotal + weekendSurcharge + peakSurcharge;
@@ -169,16 +189,26 @@ export default function CheckoutPage() {
     try {
       const normalizedItemType = itemType?.toLowerCase().includes('hotel') ? 'hotel' : 'flight';
 
-      const payload = {
-        items: [
-          {
-            itemType: normalizedItemType,
-            itemId,
+      const itemsPayload = isBundle
+        ? bundleItems.map((it) => ({
+            itemType: (it.itemType || '').toLowerCase().includes('hotel') ? 'hotel' : 'flight',
+            itemId: it.itemId,
             quantity: travelerCount,
-            ...(checkIn ? { dateFrom: checkIn } : {}),
-            ...(checkOut ? { dateTo: checkOut } : {}),
-          },
-        ],
+            ...(it.dateFrom ? { dateFrom: it.dateFrom } : checkIn ? { dateFrom: checkIn } : {}),
+            ...(it.dateTo ? { dateTo: it.dateTo } : checkOut ? { dateTo: checkOut } : {}),
+          }))
+        : [
+            {
+              itemType: normalizedItemType,
+              itemId,
+              quantity: travelerCount,
+              ...(checkIn ? { dateFrom: checkIn } : {}),
+              ...(checkOut ? { dateTo: checkOut } : {}),
+            },
+          ];
+
+      const payload = {
+        items: itemsPayload,
         travelers: travelers.map((t) => ({
           full_name: t.full_name.trim(),
           passport_no: t.passport_no.trim().toUpperCase(),
@@ -247,17 +277,17 @@ export default function CheckoutPage() {
         {/* Left Column: Booking Item & Traveler Info */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="card">
-            <h3
-              style={{
-                fontSize: '1.15rem',
-                fontWeight: 700,
-                marginBottom: '1rem',
-                borderBottom: '1px solid var(--border)',
-                paddingBottom: '0.5rem',
-              }}
-            >
-              Item Details
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>
+                {isBundle ? 'Package Bundle Details' : 'Item Details'}
+              </h3>
+              {isBundle && (
+                <span className="badge" style={{ backgroundColor: '#fef3c7', color: '#b45309', fontWeight: 700, fontSize: '0.75rem' }}>
+                  <Sparkles size={12} /> Bundle Deal (15% Off)
+                </span>
+              )}
+            </div>
+
             <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-main)' }}>
               {title}
             </div>
@@ -269,10 +299,41 @@ export default function CheckoutPage() {
               </div>
             )}
 
+            {isBundle && bundleItems && (
+              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {bundleItems.map((item, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '0.75rem',
+                      background: '#f8fafc',
+                      borderRadius: '6px',
+                      border: '1px solid #e2e8f0',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                        {item.title || `${item.itemType?.toUpperCase()} - Item #${idx + 1}`}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        Type: {item.itemType}
+                      </div>
+                    </div>
+                    <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem' }}>
+                      ${parseFloat(item.price || 0).toFixed(2)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div style={{ marginTop: '1rem', display: 'flex', gap: '1.5rem', fontSize: '0.9rem' }}>
               <div>
                 <span style={{ color: 'var(--text-muted)' }}>Type: </span>
-                <strong>{itemType}</strong>
+                <strong>{isBundle ? 'Flight + Hotel Bundle' : itemType}</strong>
               </div>
               <div>
                 <span style={{ color: 'var(--text-muted)' }}>Travelers: </span>
@@ -448,19 +509,52 @@ export default function CheckoutPage() {
           </div>
 
           {/* Itemized Price Breakdown */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginBottom: '0.5rem',
-              fontSize: '0.92rem',
-            }}
-          >
-            <span style={{ color: 'var(--text-muted)' }}>
-              Base Price ({travelerCount}x @ ${parseFloat(unitPrice).toFixed(2)})
-            </span>
-            <span>${baseTotal.toFixed(2)}</span>
-          </div>
+          {isBundle ? (
+            <>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.92rem',
+                }}
+              >
+                <span style={{ color: 'var(--text-muted)' }}>
+                  Combined Base Price ({travelerCount}x @ ${baseUnitTotal.toFixed(2)})
+                </span>
+                <span>${grossBaseTotal.toFixed(2)}</span>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.92rem',
+                  color: 'var(--success)',
+                  fontWeight: 600,
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <Sparkles size={13} /> Package Bundle Savings (15%)
+                </span>
+                <span>-${totalPackageDiscount.toFixed(2)}</span>
+              </div>
+            </>
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '0.5rem',
+                fontSize: '0.92rem',
+              }}
+            >
+              <span style={{ color: 'var(--text-muted)' }}>
+                Base Price ({travelerCount}x @ ${parseFloat(unitPrice).toFixed(2)})
+              </span>
+              <span>${baseTotal.toFixed(2)}</span>
+            </div>
+          )}
 
           {isWeekend && (
             <div
