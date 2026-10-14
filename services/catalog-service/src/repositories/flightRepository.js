@@ -1,7 +1,19 @@
 import { query } from '../config/db.js';
 
 export const flightRepository = {
-  async search({ from, to, date, page = 1, limit = 10 }) {
+  async search({
+    from,
+    to,
+    date,
+    minPrice,
+    maxPrice,
+    airline,
+    minRating,
+    maxDuration,
+    sortBy = 'departs_at_asc',
+    page = 1,
+    limit = 10,
+  }) {
     const offset = (page - 1) * limit;
     const conditions = [];
     const values = [];
@@ -21,11 +33,49 @@ export const flightRepository = {
       conditions.push(`DATE(departs_at) = DATE($${values.length})`);
     }
 
+    if (minPrice !== undefined && minPrice !== '' && !isNaN(parseFloat(minPrice))) {
+      values.push(parseFloat(minPrice));
+      conditions.push(`price >= $${values.length}`);
+    }
+
+    if (maxPrice !== undefined && maxPrice !== '' && !isNaN(parseFloat(maxPrice))) {
+      values.push(parseFloat(maxPrice));
+      conditions.push(`price <= $${values.length}`);
+    }
+
+    if (airline && airline.trim()) {
+      values.push(`%${airline.toLowerCase().trim()}%`);
+      conditions.push(`LOWER(airline) LIKE $${values.length}`);
+    }
+
+    if (minRating !== undefined && minRating !== '' && !isNaN(parseFloat(minRating))) {
+      values.push(parseFloat(minRating));
+      conditions.push(`COALESCE(avg_rating, 0) >= $${values.length}`);
+    }
+
+    if (maxDuration !== undefined && maxDuration !== '' && !isNaN(parseFloat(maxDuration))) {
+      values.push(parseFloat(maxDuration));
+      conditions.push(
+        `(EXTRACT(EPOCH FROM (arrives_at - departs_at)) / 3600) <= $${values.length}`
+      );
+    }
+
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     const countSql = `SELECT COUNT(*) FROM flights ${whereClause}`;
     const countRes = await query(countSql, values);
     const total = parseInt(countRes.rows[0].count, 10);
+
+    let orderByClause = 'ORDER BY f.departs_at ASC';
+    if (sortBy === 'price_asc') {
+      orderByClause = 'ORDER BY f.price ASC, f.departs_at ASC';
+    } else if (sortBy === 'price_desc') {
+      orderByClause = 'ORDER BY f.price DESC, f.departs_at ASC';
+    } else if (sortBy === 'duration_asc') {
+      orderByClause = 'ORDER BY (f.arrives_at - f.departs_at) ASC, f.price ASC';
+    } else if (sortBy === 'rating_desc') {
+      orderByClause = 'ORDER BY COALESCE(f.avg_rating, 0) DESC, f.price ASC';
+    }
 
     const dataSql = `
       SELECT 
@@ -36,6 +86,7 @@ export const flightRepository = {
         f.destination,
         f.departs_at,
         f.arrives_at,
+        ROUND(EXTRACT(EPOCH FROM (f.arrives_at - f.departs_at)) / 60)::INT AS duration_minutes,
         f.price,
         f.seats_total,
         COALESCE(f.avg_rating, 0)::FLOAT AS avg_rating,
@@ -49,7 +100,7 @@ export const flightRepository = {
         ), 0)::INT AS seats_available
       FROM flights f
       ${whereClause}
-      ORDER BY f.departs_at ASC
+      ${orderByClause}
       LIMIT $${values.length + 1} OFFSET $${values.length + 2}
     `;
 
@@ -165,5 +216,24 @@ export const flightRepository = {
     `;
     const res = await query(sql, [flightId, newRating]);
     return res.rows[0] || null;
+  },
+
+  async getDistinctAirlines() {
+    const res = await query('SELECT DISTINCT airline FROM flights ORDER BY airline ASC');
+    return res.rows.map((r) => r.airline);
+  },
+
+  async suggestAirportsAndAirlines(q = '') {
+    const term = `%${q.toLowerCase().trim()}%`;
+    const sql = `
+      SELECT DISTINCT origin AS code, 'airport' AS type FROM flights WHERE LOWER(origin) LIKE $1
+      UNION
+      SELECT DISTINCT destination AS code, 'airport' AS type FROM flights WHERE LOWER(destination) LIKE $1
+      UNION
+      SELECT DISTINCT airline AS code, 'airline' AS type FROM flights WHERE LOWER(airline) LIKE $1
+      LIMIT 10
+    `;
+    const res = await query(sql, [term]);
+    return res.rows;
   },
 };

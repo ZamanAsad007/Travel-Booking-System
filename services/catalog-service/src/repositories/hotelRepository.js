@@ -1,7 +1,16 @@
 import { query } from '../config/db.js';
 
 export const hotelRepository = {
-  async search({ city, page = 1, limit = 10 }) {
+  async search({
+    city,
+    minPrice,
+    maxPrice,
+    minRating,
+    freeCancellation,
+    sortBy = 'rating_desc',
+    page = 1,
+    limit = 10,
+  }) {
     const offset = (page - 1) * limit;
     const conditions = [];
     const values = [];
@@ -11,9 +20,52 @@ export const hotelRepository = {
       conditions.push(`LOWER(h.city) LIKE $${values.length}`);
     }
 
+    if (minRating !== undefined && minRating !== '' && !isNaN(parseFloat(minRating))) {
+      values.push(parseFloat(minRating));
+      conditions.push(`COALESCE(h.avg_rating, h.rating) >= $${values.length}`);
+    }
+
+    if (freeCancellation === true || freeCancellation === 'true') {
+      conditions.push(`COALESCE(h.free_cancellation, true) = true`);
+    }
+
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    const countSql = `SELECT COUNT(*) FROM hotels h ${whereClause}`;
+    const havingConditions = [];
+    if (minPrice !== undefined && minPrice !== '' && !isNaN(parseFloat(minPrice))) {
+      values.push(parseFloat(minPrice));
+      havingConditions.push(`MIN(r.price_per_night) >= $${values.length}`);
+    }
+
+    if (maxPrice !== undefined && maxPrice !== '' && !isNaN(parseFloat(maxPrice))) {
+      values.push(parseFloat(maxPrice));
+      havingConditions.push(`MIN(r.price_per_night) <= $${values.length}`);
+    }
+
+    const havingClause =
+      havingConditions.length > 0 ? `HAVING ${havingConditions.join(' AND ')}` : '';
+
+    let orderByClause = 'ORDER BY h.rating DESC, h.name ASC';
+    if (sortBy === 'price_asc') {
+      orderByClause = 'ORDER BY MIN(r.price_per_night) ASC NULLS LAST, h.rating DESC';
+    } else if (sortBy === 'price_desc') {
+      orderByClause = 'ORDER BY MIN(r.price_per_night) DESC NULLS LAST, h.rating DESC';
+    } else if (sortBy === 'rating_desc') {
+      orderByClause = 'ORDER BY COALESCE(h.avg_rating, h.rating) DESC, h.name ASC';
+    } else if (sortBy === 'name_asc') {
+      orderByClause = 'ORDER BY h.name ASC';
+    }
+
+    const countSql = `
+      SELECT COUNT(*) FROM (
+        SELECT h.id
+        FROM hotels h
+        LEFT JOIN rooms r ON h.id = r.hotel_id
+        ${whereClause}
+        GROUP BY h.id
+        ${havingClause}
+      ) AS count_query
+    `;
     const countRes = await query(countSql, values);
     const total = parseInt(countRes.rows[0].count, 10);
 
@@ -26,6 +78,7 @@ export const hotelRepository = {
         h.rating,
         COALESCE(h.avg_rating, h.rating)::FLOAT AS avg_rating,
         COALESCE(h.review_count, 0)::INT AS review_count,
+        COALESCE(h.free_cancellation, true) AS free_cancellation,
         h.image_url,
         MIN(r.price_per_night) AS starting_price,
         COUNT(r.id)::INT AS room_types_count
@@ -33,7 +86,8 @@ export const hotelRepository = {
       LEFT JOIN rooms r ON h.id = r.hotel_id
       ${whereClause}
       GROUP BY h.id
-      ORDER BY h.rating DESC, h.name ASC
+      ${havingClause}
+      ${orderByClause}
       LIMIT $${values.length + 1} OFFSET $${values.length + 2}
     `;
 
@@ -50,7 +104,7 @@ export const hotelRepository = {
 
   async findById(id) {
     const hotelSql = `
-      SELECT id, name, city, address, rating, COALESCE(avg_rating, rating)::FLOAT AS avg_rating, COALESCE(review_count, 0)::INT AS review_count, image_url, created_at
+      SELECT id, name, city, address, rating, COALESCE(avg_rating, rating)::FLOAT AS avg_rating, COALESCE(review_count, 0)::INT AS review_count, COALESCE(free_cancellation, true) AS free_cancellation, image_url, created_at
       FROM hotels
       WHERE id = $1
       LIMIT 1
@@ -198,5 +252,22 @@ export const hotelRepository = {
     `;
     const res = await query(sql, [hotelId, newRating]);
     return res.rows[0] || null;
+  },
+
+  async getDistinctCities() {
+    const res = await query('SELECT DISTINCT city FROM hotels ORDER BY city ASC');
+    return res.rows.map((r) => r.city);
+  },
+
+  async suggestCitiesAndHotels(q = '') {
+    const term = `%${q.toLowerCase().trim()}%`;
+    const sql = `
+      SELECT DISTINCT city AS name, 'city' AS type, NULL AS hotel_id FROM hotels WHERE LOWER(city) LIKE $1
+      UNION
+      SELECT name, 'hotel' AS type, id::text AS hotel_id FROM hotels WHERE LOWER(name) LIKE $1
+      LIMIT 10
+    `;
+    const res = await query(sql, [term]);
+    return res.rows;
   },
 };
