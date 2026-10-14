@@ -3,11 +3,29 @@ import { catalogService } from '../services/catalogService.js';
 export const catalogController = {
   async searchFlights(req, res, next) {
     try {
-      const { from, to, date, page, limit } = req.query;
+      const {
+        from,
+        to,
+        date,
+        minPrice,
+        maxPrice,
+        airline,
+        minRating,
+        maxDuration,
+        sortBy,
+        page,
+        limit,
+      } = req.query;
       const result = await catalogService.searchFlights({
         from,
         to,
         date,
+        minPrice,
+        maxPrice,
+        airline,
+        minRating,
+        maxDuration,
+        sortBy,
         page: page ? parseInt(page, 10) : 1,
         limit: limit ? parseInt(limit, 10) : 10,
       });
@@ -37,9 +55,15 @@ export const catalogController = {
 
   async searchHotels(req, res, next) {
     try {
-      const { city, page, limit } = req.query;
+      const { city, minPrice, maxPrice, minRating, freeCancellation, sortBy, page, limit } =
+        req.query;
       const result = await catalogService.searchHotels({
         city,
+        minPrice,
+        maxPrice,
+        minRating,
+        freeCancellation,
+        sortBy,
         page: page ? parseInt(page, 10) : 1,
         limit: limit ? parseInt(limit, 10) : 10,
       });
@@ -306,6 +330,52 @@ export const catalogController = {
       res.status(200).json({
         success: true,
         data: history,
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async suggest(req, res, next) {
+    try {
+      const { q } = req.query;
+      const result = await catalogService.suggest(q);
+      res.status(200).json({
+        success: true,
+        data: result,
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getBundles(req, res, next) {
+    try {
+      const { from, to, date, limit } = req.query;
+      const result = await catalogService.getBundles({
+        from,
+        to,
+        date,
+        limit: limit ? parseInt(limit, 10) : 10,
+      });
+      res.status(200).json({
+        success: true,
+        data: result,
+        error: null,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getAirlines(req, res, next) {
+    try {
+      const airlines = await catalogService.getAirlines();
+      res.status(200).json({
+        success: true,
+        data: { airlines },
         error: null,
       });
     } catch (error) {

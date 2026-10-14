@@ -71,6 +71,9 @@ const roomCreateSchema = z.object({
 });
 
 // Search & details
+router.get('/suggest', catalogController.suggest);
+router.get('/bundles', catalogController.getBundles);
+router.get('/airlines', catalogController.getAirlines);
 router.get('/flights', catalogController.searchFlights);
 router.get('/flights/:id', catalogController.getFlight);
 router.get('/hotels', catalogController.searchHotels);
