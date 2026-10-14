@@ -16,4 +16,13 @@ export const catalogApi = {
   getPriceHistory: async (itemType, itemId) => {
     return api.get('/catalog/price-history', { params: { itemType, itemId } });
   },
+  suggest: async (q) => {
+    return api.get('/catalog/suggest', { params: { q } });
+  },
+  getBundles: async (params = {}) => {
+    return api.get('/catalog/bundles', { params });
+  },
+  getAirlines: async () => {
+    return api.get('/catalog/airlines');
+  },
 };
