@@ -2,6 +2,7 @@ import { eventBus } from '../../../../shared/events/eventBus.js';
 import { withIdempotency } from '../../../../shared/events/idempotency.js';
 import { pool } from '../config/db.js';
 import { catalogService } from '../services/catalogService.js';
+import { searchCache } from '../services/searchCache.js';
 import { EVENTS } from '../../../../shared/constants/events.js';
 
 export async function startCatalogConsumer() {
@@ -26,10 +27,12 @@ export async function startCatalogConsumer() {
           });
         }
       }
+      await searchCache.invalidateAll();
       console.log(`[catalog-service] Confirmed reservations for booking: ${data.bookingId}`);
     } else if (type === EVENTS.BOOKING_CANCELLED) {
       // Release holds and any created reservations
       await catalogService.releaseHolds(data.bookingId);
+      await searchCache.invalidateAll();
       console.log(
         `[catalog-service] Released holds and cancelled reservations for booking: ${data.bookingId}`
       );
@@ -40,6 +43,7 @@ export async function startCatalogConsumer() {
         itemId: data.itemId,
         rating: data.rating,
       });
+      await searchCache.invalidateAll();
       console.log(
         `[catalog-service] Updated ratings for ${data.itemType} ${data.itemId} from review event`
       );
