@@ -13,9 +13,15 @@ import {
   Package,
   Calendar,
   MapPin,
+  ArrowLeftRight,
+  Compass,
   Star,
+  CheckCircle2,
+  TrendingUp,
 } from 'lucide-react';
 import AutocompleteInput from '../components/AutocompleteInput.jsx';
+import DestinationCard from '../components/DestinationCard.jsx';
+import Skeleton from '../components/Skeleton.jsx';
 import { catalogApi } from '../api/catalog.js';
 
 export default function HomePage() {
@@ -46,6 +52,13 @@ export default function HomePage() {
 
   const featuredBundles = bundlesData?.data?.bundles || [];
 
+  // Swap origin and destination
+  const handleSwapAirports = () => {
+    const temp = origin;
+    setOrigin(destination);
+    setDestination(temp);
+  };
+
   const handleFlightSubmit = (e) => {
     e.preventDefault();
     const params = new URLSearchParams();
@@ -66,7 +79,6 @@ export default function HomePage() {
 
   const handleBundleSubmit = (e) => {
     e.preventDefault();
-    // Scroll down to featured bundles or search
     const params = new URLSearchParams();
     if (bundleFrom) params.append('from', bundleFrom);
     if (bundleTo) params.append('to', bundleTo);
@@ -90,19 +102,74 @@ export default function HomePage() {
     });
   };
 
+  // Curated trending destination cards
+  const trendingDestinations = [
+    {
+      city: 'Tokyo',
+      country: 'Japan',
+      code: 'HND',
+      price: 490,
+      tag: 'Trending',
+      image: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      city: 'Paris',
+      country: 'France',
+      code: 'CDG',
+      price: 360,
+      tag: 'Romantic',
+      image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      city: 'London',
+      country: 'United Kingdom',
+      code: 'LHR',
+      price: 420,
+      tag: 'Direct Flights',
+      image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      city: 'New York',
+      country: 'United States',
+      code: 'JFK',
+      price: 280,
+      tag: 'Popular',
+      image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      city: 'Rome',
+      country: 'Italy',
+      code: 'FCO',
+      price: 390,
+      tag: 'Heritage',
+      image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=800&q=80',
+    },
+    {
+      city: 'Dubai',
+      country: 'United Arab Emirates',
+      code: 'DXB',
+      price: 520,
+      tag: 'Luxury',
+      image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
+    },
+  ];
+
   return (
     <div>
-      {/* Hero Banner */}
+      {/* Travel-Themed Hero Banner */}
       <div className="hero-banner">
-        <h1>Discover Seamless Travel</h1>
-        <p>Book flights, luxury hotels, and bundled vacation packages with event-driven saga reliability.</p>
+        <div className="hero-badge">
+          <Sparkles size={14} style={{ color: 'var(--highlight)' }} />
+          <span>Curated Journeys & Luxury Stays</span>
+        </div>
+        <h1>Where to next?</h1>
+        <p>
+          Discover direct flights, five-star accommodations, and bespoke package deals backed by real-time saga reliability.
+        </p>
       </div>
 
-      {/* Interactive Search Box */}
-      <div
-        className="card"
-        style={{ marginTop: '-2.5rem', marginBottom: '2.5rem', boxShadow: 'var(--shadow-lg)' }}
-      >
+      {/* Floating Elevated Search Card */}
+      <div className="floating-search-card">
         <div className="tabs">
           <button
             type="button"
@@ -126,48 +193,65 @@ export default function HomePage() {
             onClick={() => setTab('bundles')}
           >
             <Package size={18} />
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              Package Deals <span className="badge" style={{ backgroundColor: '#fef3c7', color: '#b45309', fontSize: '0.68rem', padding: '0.1rem 0.35rem' }}>Save 15%</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              Vacation Packages
+              <span className="stamp-badge stamp-badge-amber">Save 15%</span>
             </span>
           </button>
         </div>
 
         {tab === 'flights' && (
-          <form onSubmit={handleFlightSubmit} className="grid-4" style={{ alignItems: 'flex-end' }}>
-            <AutocompleteInput
-              label="From (Origin)"
-              placeholder="e.g. JFK or New York"
-              value={origin}
-              onChange={setOrigin}
-              onSelect={(val) => setOrigin(val)}
-              icon={Plane}
-              filterType="airport"
-            />
-
-            <AutocompleteInput
-              label="To (Destination)"
-              placeholder="e.g. LHR or London"
-              value={destination}
-              onChange={setDestination}
-              onSelect={(val) => setDestination(val)}
-              icon={MapPin}
-              filterType="airport"
-            />
-
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Departure Date</label>
-              <input
-                type="date"
-                className="form-input"
-                value={flightDate}
-                onChange={(e) => setFlightDate(e.target.value)}
+          <form onSubmit={handleFlightSubmit}>
+            <div className="search-route-grid">
+              <AutocompleteInput
+                label="From (Origin)"
+                placeholder="e.g. JFK or New York"
+                value={origin}
+                onChange={setOrigin}
+                onSelect={(val) => setOrigin(val)}
+                icon={Plane}
+                filterType="airport"
               />
-            </div>
 
-            <button type="submit" className="btn btn-primary" style={{ height: '42px' }}>
-              <Search size={16} />
-              Find Flights
-            </button>
+              <button
+                type="button"
+                onClick={handleSwapAirports}
+                className="swap-btn"
+                title="Swap origin and destination"
+                aria-label="Swap origin and destination"
+              >
+                <ArrowLeftRight size={16} />
+              </button>
+
+              <AutocompleteInput
+                label="To (Destination)"
+                placeholder="e.g. LHR or London"
+                value={destination}
+                onChange={setDestination}
+                onSelect={(val) => setDestination(val)}
+                icon={MapPin}
+                filterType="airport"
+              />
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Departure Date</label>
+                <input
+                  type="date"
+                  className="form-input"
+                  value={flightDate}
+                  onChange={(e) => setFlightDate(e.target.value)}
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-accent"
+                style={{ height: '46px', padding: '0 1.5rem', alignSelf: 'flex-end' }}
+              >
+                <Search size={18} />
+                <span>Search Flights</span>
+              </button>
+            </div>
           </form>
         )}
 
@@ -206,10 +290,10 @@ export default function HomePage() {
             <button
               type="submit"
               className="btn btn-primary"
-              style={{ height: '42px', backgroundColor: 'var(--secondary)' }}
+              style={{ height: '46px' }}
             >
-              <Search size={16} />
-              Find Hotels
+              <Search size={18} />
+              <span>Find Hotels</span>
             </button>
           </form>
         )}
@@ -247,89 +331,135 @@ export default function HomePage() {
 
             <button
               type="submit"
-              className="btn btn-primary"
-              style={{ height: '42px', backgroundColor: '#d97706' }}
+              className="btn btn-accent"
+              style={{ height: '46px' }}
             >
-              <Sparkles size={16} />
-              Explore Deals
+              <Sparkles size={18} />
+              <span>Explore Deals</span>
             </button>
           </form>
         )}
       </div>
 
-      {/* Featured Trip Package Deals Section */}
-      <div style={{ marginBottom: '3rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+      {/* Trending Destinations Section */}
+      <section style={{ marginBottom: '4rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
           <div>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Sparkles size={22} style={{ color: '#d97706' }} />
-              Featured Package Deals
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>
+              <Compass size={16} />
+              <span>Inspiring Escapes</span>
+            </div>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>
+              Trending Destinations
             </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginTop: '0.2rem' }}>
-              Combine flights + luxury hotel stays and save 15% with guaranteed multi-item booking
-            </p>
           </div>
           <Link
             to="/flights"
             className="btn btn-secondary"
-            style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}
+            style={{ padding: '0.45rem 1rem', fontSize: '0.88rem' }}
           >
-            <span>View All Offers</span>
+            <span>All Destinations</span>
+            <ArrowRight size={14} />
+          </Link>
+        </div>
+
+        <div className="destinations-scroll-row">
+          {trendingDestinations.map((dest) => (
+            <DestinationCard key={dest.code} {...dest} />
+          ))}
+        </div>
+      </section>
+
+      {/* Featured Vacation Package Deals Section */}
+      <section style={{ marginBottom: '4rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>
+              <Sparkles size={16} />
+              <span>Exclusive Savings</span>
+            </div>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>
+              Featured Package Deals
+            </h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.35rem' }}>
+              Combine flights + boutique hotels for an automatic 15% combo discount.
+            </p>
+          </div>
+          <Link
+            to="/flights?deal=bundle"
+            className="btn btn-secondary"
+            style={{ padding: '0.45rem 1rem', fontSize: '0.88rem' }}
+          >
+            <span>View All Packages</span>
             <ArrowRight size={14} />
           </Link>
         </div>
 
         {bundlesLoading ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-            Loading top vacation package bundles...
+          <div className="grid-2">
+            {[1, 2].map((i) => (
+              <div key={i} className="card" style={{ padding: '1.5rem' }}>
+                <Skeleton variant="text" width="40%" height="24px" style={{ marginBottom: '1rem' }} />
+                <Skeleton variant="text" width="70%" height="32px" style={{ marginBottom: '1.25rem' }} />
+                <Skeleton variant="rectangular" height="80px" style={{ marginBottom: '1rem' }} />
+                <Skeleton variant="text" width="50%" height="28px" />
+              </div>
+            ))}
           </div>
         ) : featuredBundles.length === 0 ? (
-          <div className="card" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-            No packages available currently. Check back soon!
+          <div className="empty-state-card" style={{ maxWidth: '600px' }}>
+            <div className="empty-state-icon">
+              <Package size={36} />
+            </div>
+            <h3 className="empty-state-title">No Packages Available</h3>
+            <p className="empty-state-description">
+              Our automated bundle engine is assembling fresh flight and hotel packages. Check back shortly!
+            </p>
           </div>
         ) : (
           <div className="grid-2">
             {featuredBundles.map((bundle) => (
               <div
                 key={bundle.id}
-                className="card card-hover"
+                className="card card-hover card-ticket"
                 style={{
-                  border: '1px solid #fde68a',
-                  background: 'linear-gradient(to bottom, #fffbeb, #ffffff)',
+                  border: '1.5px solid var(--border)',
+                  background: 'linear-gradient(to bottom, #FFFAF7, var(--surface))',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
+                  padding: '1.5rem',
                 }}
               >
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                    <span className="badge" style={{ backgroundColor: '#fef3c7', color: '#b45309', fontWeight: 700, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                      <Sparkles size={12} /> Bundle & Save 15%
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                    <span className="stamp-badge stamp-badge-amber">
+                      <Sparkles size={12} /> Save 15%
                     </span>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                       {bundle.city}
                     </span>
                   </div>
 
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.4rem', color: '#1e293b' }}>
+                  <h3 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: '0.6rem', color: 'var(--secondary)' }}>
                     {bundle.title}
                   </h3>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.75rem', marginBottom: '1rem' }}>
-                    <div style={{ padding: '0.6rem', background: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '0.2rem' }}>
-                        <Plane size={13} /> {bundle.flight.airline}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.75rem', marginBottom: '1.25rem' }}>
+                    <div style={{ padding: '0.75rem', background: 'var(--surface)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '0.2rem' }}>
+                        <Plane size={14} /> {bundle.flight.airline}
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                         {bundle.flight.origin} → {bundle.flight.destination}
                       </div>
                     </div>
 
-                    <div style={{ padding: '0.6rem', background: '#ffffff', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem', fontWeight: 700, color: 'var(--secondary)', marginBottom: '0.2rem' }}>
-                        <Hotel size={13} /> {bundle.hotel.name}
+                    <div style={{ padding: '0.75rem', background: 'var(--surface)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', fontWeight: 700, color: 'var(--secondary)', marginBottom: '0.2rem' }}>
+                        <Hotel size={14} /> {bundle.hotel.name}
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                         {bundle.room.type}
                       </div>
                     </div>
@@ -338,119 +468,107 @@ export default function HomePage() {
 
                 <div
                   style={{
-                    borderTop: '1px solid #fef3c7',
-                    paddingTop: '0.85rem',
+                    borderTop: '1.5px dashed var(--border)',
+                    paddingTop: '1rem',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '0.75rem',
                   }}
                 >
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                      <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                         ${bundle.originalPrice.toFixed(0)}
                       </span>
-                      <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#b45309' }}>
+                      <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--accent)', fontFamily: 'var(--font-heading)' }}>
                         ${bundle.bundlePrice.toFixed(0)}
                       </span>
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600 }}>
-                      Save ${bundle.savings.toFixed(0)} with combo deal
+                    <div style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 700 }}>
+                      Save ${bundle.savings.toFixed(0)} with combo pricing
                     </div>
                   </div>
 
                   <button
                     onClick={() => handleBookBundle(bundle)}
-                    className="btn btn-primary"
-                    style={{ backgroundColor: '#d97706', padding: '0.5rem 1rem', fontSize: '0.88rem' }}
+                    className="btn btn-accent"
+                    style={{ padding: '0.55rem 1.15rem', fontSize: '0.9rem' }}
                   >
                     <span>Book Package</span>
-                    <ArrowRight size={14} />
+                    <ArrowRight size={15} />
                   </button>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Architecture Feature Highlights */}
-      <div className="grid-3">
-        <div className="card">
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              background: 'var(--primary-light)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--primary)',
-              marginBottom: '1rem',
-            }}
-          >
-            <Zap size={20} />
+      {/* "Why TravelGo" Icon Strip */}
+      <section style={{ marginBottom: '3rem' }}>
+        <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 2.5rem' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>
+            <ShieldCheck size={16} />
+            <span>Built For Confidence</span>
           </div>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.4rem' }}>
-            Choreographed Saga
-          </h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            Asynchronous orchestration between booking, catalog, payment, and notification
-            microservices using RabbitMQ with transactional outbox guarantees.
+          <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>Why Travel With TravelGo?</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginTop: '0.35rem' }}>
+            Production-grade distributed architecture delivering zero-conflict holds and instantaneous status feedback.
           </p>
         </div>
 
-        <div className="card">
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              background: '#ecfdf5',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--success)',
-              marginBottom: '1rem',
-            }}
-          >
-            <ShieldCheck size={20} />
+        <div className="grid-4">
+          <div className="why-travelgo-card">
+            <div className="why-travelgo-icon" style={{ background: 'var(--primary-light)', color: 'var(--primary)' }}>
+              <Zap size={24} />
+            </div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--secondary)' }}>
+              Saga Reliability
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.5 }}>
+              Distributed saga pattern coordinates booking, inventory holds, and payment with automatic rollback.
+            </p>
           </div>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.4rem' }}>
-            Redis Caching & Holds
-          </h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            Short-lived 10-minute inventory holds with TTL and high-throughput search query caching with
-            instant invalidation on price or stock updates.
-          </p>
-        </div>
 
-        <div className="card">
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              background: '#fef3c7',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#d97706',
-              marginBottom: '1rem',
-            }}
-          >
-            <Bell size={20} />
+          <div className="why-travelgo-card">
+            <div className="why-travelgo-icon" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
+              <Sparkles size={24} />
+            </div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--secondary)' }}>
+              Real-Time SSE
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.5 }}>
+              Instant live streaming updates deliver status transitions without manual page refreshes.
+            </p>
           </div>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.4rem' }}>
-            Real-Time Updates (SSE)
-          </h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            Live booking status streaming, automated e-ticket PDF generation with QR codes, and price alert
-            event triggers.
-          </p>
+
+          <div className="why-travelgo-card">
+            <div className="why-travelgo-icon" style={{ background: 'var(--highlight-light)', color: '#B45309' }}>
+              <Bell size={24} />
+            </div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--secondary)' }}>
+              Smart Price Alerts
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.5 }}>
+              Set notifications on favorite routes and get notified the moment prices drop to your target.
+            </p>
+          </div>
+
+          <div className="why-travelgo-card">
+            <div className="why-travelgo-icon" style={{ background: '#EEF2F6', color: 'var(--navy)' }}>
+              <Star size={24} />
+            </div>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--secondary)' }}>
+              Verified Reviews
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.5 }}>
+              100% verified traveler ratings and reviews cross-referenced against completed booking confirmations.
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
