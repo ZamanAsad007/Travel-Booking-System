@@ -123,12 +123,12 @@ export default function AutocompleteInput({
         <div
           style={{
             position: 'absolute',
-            top: 'calc(100% + 4px)',
+            top: 'calc(100% + 6px)',
             left: 0,
             right: 0,
-            background: '#ffffff',
-            borderRadius: 'var(--radius-sm)',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            background: 'var(--surface)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-lg)',
             border: '1px solid var(--border)',
             zIndex: 50,
             maxHeight: '260px',
@@ -145,19 +145,20 @@ export default function AutocompleteInput({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 cursor: 'pointer',
-                borderBottom: idx < suggestions.length - 1 ? '1px solid #f1f5f9' : 'none',
+                borderBottom: idx < suggestions.length - 1 ? '1px solid var(--border-subtle, #f1f5f9)' : 'none',
                 transition: 'background 0.15s',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f8fafc')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffffff')}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-light)')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 <div
                   style={{
-                    width: '26px',
-                    height: '26px',
+                    width: '28px',
+                    height: '28px',
                     borderRadius: '50%',
-                    background: '#f1f5f9',
+                    background: 'var(--sand)',
+                    border: '1px solid var(--border)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -181,10 +182,11 @@ export default function AutocompleteInput({
                   fontSize: '0.7rem',
                   textTransform: 'uppercase',
                   fontWeight: 700,
-                  padding: '0.15rem 0.4rem',
-                  borderRadius: '4px',
-                  background: '#f1f5f9',
+                  padding: '0.15rem 0.45rem',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'var(--sand-dark)',
                   color: 'var(--text-muted)',
+                  letterSpacing: '0.04em',
                 }}
               >
                 {item.type}
