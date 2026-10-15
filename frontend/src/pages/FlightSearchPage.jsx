@@ -10,13 +10,20 @@ import {
   ArrowRight,
   Clock,
   AlertCircle,
-  Heart,
   SlidersHorizontal,
   Star,
   RotateCcw,
   Sparkles,
+  ArrowUpDown,
+  Filter,
+  X,
+  Compass,
 } from 'lucide-react';
 import AutocompleteInput from '../components/AutocompleteInput.jsx';
+import FlightCard from '../components/FlightCard.jsx';
+import FareStrip from '../components/FareStrip.jsx';
+import Skeleton from '../components/Skeleton.jsx';
+import EmptyState from '../components/EmptyState.jsx';
 import { engagementApi } from '../api/engagement.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -24,6 +31,11 @@ export default function FlightSearchPage() {
   const { isAuthenticated } = useAuth();
   const [wishlistIds, setWishlistIds] = useState(new Set());
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Search form expansion toggle
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  // Mobile filter drawer state
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   // Primary search inputs
   const [from, setFrom] = useState(searchParams.get('from')?.toUpperCase() || '');
@@ -77,8 +89,10 @@ export default function FlightSearchPage() {
   }, [isAuthenticated]);
 
   const handleToggleWishlist = async (flightId, e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!isAuthenticated) return;
     try {
       if (wishlistIds.has(flightId)) {
@@ -142,6 +156,7 @@ export default function FlightSearchPage() {
 
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
+    setSearchExpanded(false);
     applyFilters();
   };
 
@@ -156,105 +171,137 @@ export default function FlightSearchPage() {
     setMaxDuration('');
     setSortBy('departs_at_asc');
     setSearchParams({});
+    setMobileFilterOpen(false);
   };
 
-  const formatDuration = (minutes) => {
-    if (!minutes) return null;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins > 0 ? `${mins}m` : ''}`;
+  const handleSelectFareDate = (newDateStr) => {
+    setDate(newDateStr);
+    applyFilters({ date: newDateStr });
   };
 
   const flights = data?.data?.flights || [];
+  const lowestPrice = flights.length > 0 ? Math.min(...flights.map((f) => parseFloat(f.price))) : 350;
+
+  // Active filter count for badge
+  const activeFilterCount = [
+    minPrice,
+    maxPrice,
+    airline,
+    minRating,
+    maxDuration,
+  ].filter(Boolean).length;
 
   return (
     <div>
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-          Search Flights
+      {/* Search Header Banner */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.4rem', color: 'var(--secondary)' }}>
+          Flight Results
         </h1>
-        <p style={{ color: 'var(--text-muted)' }}>
-          Browse available flights across major routes with real-time seat tracking and intelligent filters
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+          Explore live scheduled flights with real-time seat tracking, fare comparison, and instant saga holds.
         </p>
       </div>
 
-      {/* Top Search Bar */}
-      <div className="card" style={{ marginBottom: '2rem' }}>
-        <form onSubmit={handleSearchSubmit} className="grid-4" style={{ alignItems: 'flex-end' }}>
-          <AutocompleteInput
-            label="Origin (Airport / City)"
-            placeholder="e.g. JFK or New York"
-            value={from}
-            onChange={setFrom}
-            onSelect={(val) => setFrom(val)}
-            icon={Plane}
-            filterType="airport"
-          />
-
-          <AutocompleteInput
-            label="Destination"
-            placeholder="e.g. LHR or London"
-            value={to}
-            onChange={setTo}
-            onSelect={(val) => setTo(val)}
-            icon={MapPin}
-            filterType="airport"
-          />
-
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Departure Date</label>
-            <input
-              type="date"
-              className="form-input"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
+      {/* Compact Search Summary Bar with Modify Toggle */}
+      <div className="search-summary-bar">
+        <div className="search-summary-route">
+          <span className="search-summary-code">{from || 'ANY'}</span>
+          <div style={{ display: 'flex', alignItems: 'center', color: 'var(--primary)' }}>
+            <span style={{ height: '1.5px', width: '24px', background: 'var(--primary)', display: 'inline-block' }} />
+            <Plane size={14} style={{ transform: 'rotate(90deg)', margin: '0 2px' }} />
+            <span style={{ height: '1.5px', width: '24px', background: 'var(--primary)', display: 'inline-block' }} />
           </div>
+          <span className="search-summary-code">{to || 'ALL DESTINATIONS'}</span>
+        </div>
 
-          <button type="submit" className="btn btn-primary" style={{ height: '42px' }}>
-            <Search size={16} />
-            Search Flights
-          </button>
-        </form>
+        <div className="search-summary-meta">
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <Calendar size={14} style={{ color: 'var(--primary)' }} />
+            <span>{date ? new Date(date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'Flexible Dates'}</span>
+          </span>
+          <span>•</span>
+          <span><strong>{flights.length}</strong> flights found</span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setSearchExpanded((prev) => !prev)}
+          className="btn btn-secondary"
+          style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
+        >
+          <Search size={14} />
+          <span>{searchExpanded ? 'Close Search' : 'Modify Search'}</span>
+        </button>
       </div>
 
-      {/* Two-Column Layout: Sidebar Filters + Flight Results */}
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '2rem', alignItems: 'flex-start' }}>
-        {/* Left Column: Filter Sidebar */}
-        <div className="card" style={{ position: 'sticky', top: '90px' }}>
+      {/* Expandable Search Form Drawer */}
+      {searchExpanded && (
+        <div className="card" style={{ marginBottom: '1.75rem', border: '1.5px solid var(--primary)', animation: 'fadeIn 0.2s ease-out' }}>
+          <form onSubmit={handleSearchSubmit} className="grid-4" style={{ alignItems: 'flex-end' }}>
+            <AutocompleteInput
+              label="From (Origin)"
+              placeholder="e.g. JFK or New York"
+              value={from}
+              onChange={setFrom}
+              onSelect={(val) => setFrom(val)}
+              icon={Plane}
+              filterType="airport"
+            />
+
+            <AutocompleteInput
+              label="To (Destination)"
+              placeholder="e.g. LHR or London"
+              value={to}
+              onChange={setTo}
+              onSelect={(val) => setTo(val)}
+              icon={MapPin}
+              filterType="airport"
+            />
+
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label">Departure Date</label>
+              <input
+                type="date"
+                className="form-input"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </div>
+
+            <button type="submit" className="btn btn-accent" style={{ height: '44px' }}>
+              <Search size={16} />
+              Update Search
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* 7-Day Fare Strip Calendar */}
+      <FareStrip
+        currentDate={date}
+        onSelectDate={handleSelectFareDate}
+        basePrice={lowestPrice}
+      />
+
+      {/* Main Content: Left Filter Sidebar + Right Results List */}
+      <div style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: '2rem', alignItems: 'flex-start' }}>
+        {/* Desktop Filter Sidebar */}
+        <aside className="card desktop-filter-sidebar" style={{ position: 'sticky', top: '90px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--secondary)' }}>
               <SlidersHorizontal size={16} /> Filters
             </h3>
             <button
+              type="button"
               onClick={handleResetFilters}
-              style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 600 }}
             >
               <RotateCcw size={12} /> Reset
             </button>
           </div>
 
-          {/* Sort By */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <label className="form-label" style={{ fontSize: '0.82rem' }}>Sort By</label>
-            <select
-              className="form-input"
-              value={sortBy}
-              onChange={(e) => {
-                setSortBy(e.target.value);
-                applyFilters({ sortBy: e.target.value });
-              }}
-              style={{ fontSize: '0.85rem' }}
-            >
-              <option value="departs_at_asc">Departure: Earliest</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="duration_asc">Duration: Shortest</option>
-              <option value="rating_desc">Rating: Highest</option>
-            </select>
-          </div>
-
-          {/* Price Range */}
+          {/* Price Range Filter */}
           <div style={{ marginBottom: '1.25rem' }}>
             <label className="form-label" style={{ fontSize: '0.82rem' }}>Price Range ($)</label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
@@ -283,7 +330,7 @@ export default function FlightSearchPage() {
           <div style={{ marginBottom: '1.25rem' }}>
             <label className="form-label" style={{ fontSize: '0.82rem' }}>Airline</label>
             <select
-              className="form-input"
+              className="form-select"
               value={airline}
               onChange={(e) => {
                 setAirline(e.target.value);
@@ -304,7 +351,7 @@ export default function FlightSearchPage() {
           <div style={{ marginBottom: '1.25rem' }}>
             <label className="form-label" style={{ fontSize: '0.82rem' }}>Minimum Rating</label>
             <select
-              className="form-input"
+              className="form-select"
               value={minRating}
               onChange={(e) => {
                 setMinRating(e.target.value);
@@ -319,11 +366,11 @@ export default function FlightSearchPage() {
             </select>
           </div>
 
-          {/* Max Duration */}
-          <div style={{ marginBottom: '1rem' }}>
+          {/* Maximum Duration */}
+          <div style={{ marginBottom: '1.25rem' }}>
             <label className="form-label" style={{ fontSize: '0.82rem' }}>Max Duration</label>
             <select
-              className="form-input"
+              className="form-select"
               value={maxDuration}
               onChange={(e) => {
                 setMaxDuration(e.target.value);
@@ -343,203 +390,242 @@ export default function FlightSearchPage() {
             type="button"
             onClick={() => applyFilters()}
             className="btn btn-primary"
-            style={{ width: '100%', fontSize: '0.85rem', padding: '0.5rem' }}
+            style={{ width: '100%', fontSize: '0.88rem', padding: '0.55rem' }}
           >
             Apply Filters
           </button>
-        </div>
+        </aside>
 
-        {/* Right Column: Results List */}
+        {/* Right Column: Sort Tabs & Flight Ticket Results */}
         <div>
+          {/* Sort Tabs & Mobile Filter Trigger */}
+          <div className="sort-tabs-container">
+            <div className="sort-tabs">
+              <button
+                type="button"
+                className={`sort-tab-btn ${sortBy === 'departs_at_asc' ? 'active' : ''}`}
+                onClick={() => {
+                  setSortBy('departs_at_asc');
+                  applyFilters({ sortBy: 'departs_at_asc' });
+                }}
+              >
+                <span>Earliest</span>
+              </button>
+              <button
+                type="button"
+                className={`sort-tab-btn ${sortBy === 'price_asc' ? 'active' : ''}`}
+                onClick={() => {
+                  setSortBy('price_asc');
+                  applyFilters({ sortBy: 'price_asc' });
+                }}
+              >
+                <span>Cheapest</span>
+              </button>
+              <button
+                type="button"
+                className={`sort-tab-btn ${sortBy === 'duration_asc' ? 'active' : ''}`}
+                onClick={() => {
+                  setSortBy('duration_asc');
+                  applyFilters({ sortBy: 'duration_asc' });
+                }}
+              >
+                <span>Fastest</span>
+              </button>
+              <button
+                type="button"
+                className={`sort-tab-btn ${sortBy === 'rating_desc' ? 'active' : ''}`}
+                onClick={() => {
+                  setSortBy('rating_desc');
+                  applyFilters({ sortBy: 'rating_desc' });
+                }}
+              >
+                <span>Top Rated</span>
+              </button>
+            </div>
+
+            {/* Mobile Filter Button */}
+            <button
+              type="button"
+              className="mobile-filter-trigger"
+              onClick={() => setMobileFilterOpen(true)}
+            >
+              <Filter size={15} />
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="stamp-badge" style={{ padding: '0.05rem 0.35rem', fontSize: '0.65rem' }}>
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Results List */}
           {isLoading ? (
-            <div style={{ textAlign: 'center', padding: '3rem' }}>
-              <p style={{ color: 'var(--text-muted)' }}>Searching flights with Redis cache...</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Skeleton variant="text" width="200px" height="24px" />
+                    <Skeleton variant="text" width="80px" height="24px" />
+                  </div>
+                  <Skeleton variant="rectangular" height="64px" />
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Skeleton variant="text" width="160px" height="20px" />
+                    <Skeleton variant="text" width="100px" height="28px" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : error ? (
             <div className="card" style={{ background: 'var(--danger-bg)', borderColor: '#fca5a5' }}>
-              <div
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}
-              >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}>
                 <AlertCircle size={20} />
                 <strong>Failed to load flights: {error.message || 'Error occurred'}</strong>
               </div>
             </div>
           ) : flights.length === 0 ? (
-            <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-              <Plane
-                size={48}
-                style={{ color: 'var(--text-muted)', margin: '0 auto 1rem', opacity: 0.5 }}
-              />
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                No flights matched your criteria
-              </h3>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                Try relaxing your price, duration, or airline filters to discover more flights.
-              </p>
-              <button onClick={handleResetFilters} className="btn btn-secondary">
-                Clear Filters
-              </button>
-            </div>
+            <EmptyState
+              icon={Compass}
+              title="No flights match your criteria"
+              description="Try adjusting your departure date, price range, or clearing your airline filters to see available flights."
+              actionText="Clear All Filters"
+              onAction={handleResetFilters}
+            />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-                  Found <strong>{flights.length}</strong> available flight(s)
-                </span>
-              </div>
-
-              {flights.map((flight) => {
-                const availableSeats =
-                  flight.seats_available !== undefined
-                    ? flight.seats_available
-                    : flight.seats_total - (flight.booked_seats || 0);
-                const isSoldOut = availableSeats <= 0;
-                const duration = formatDuration(flight.duration_minutes);
-
-                return (
-                  <div
-                    key={flight.id}
-                    className="card card-hover"
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: '1rem',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                      <div
-                        style={{
-                          width: '48px',
-                          height: '48px',
-                          borderRadius: '50%',
-                          background: 'var(--primary-light)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'var(--primary)',
-                        }}
-                      >
-                        <Plane size={24} />
-                      </div>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>
-                            {flight.airline}
-                          </h3>
-                          {flight.avg_rating > 0 && (
-                            <span
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.2rem',
-                                fontSize: '0.75rem',
-                                color: '#b45309',
-                                background: '#fef3c7',
-                                padding: '0.1rem 0.4rem',
-                                borderRadius: '4px',
-                                fontWeight: 700,
-                              }}
-                            >
-                              <Star size={12} fill="#b45309" />
-                              {parseFloat(flight.avg_rating).toFixed(1)}
-                            </span>
-                          )}
-                        </div>
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            marginTop: '0.35rem',
-                            color: 'var(--text-muted)',
-                            fontSize: '0.9rem',
-                          }}
-                        >
-                          <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-                            {flight.origin}
-                          </span>
-                          <ArrowRight size={14} />
-                          <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-                            {flight.destination}
-                          </span>
-                          <span>•</span>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            <Clock size={14} />
-                            {new Date(flight.departs_at).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}{' '}
-                            -{' '}
-                            {new Date(flight.arrives_at).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                          {duration && (
-                            <>
-                              <span>•</span>
-                              <span>{duration}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
-                          ${parseFloat(flight.price).toFixed(2)}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: '0.8rem',
-                            color: isSoldOut ? 'var(--danger)' : 'var(--text-muted)',
-                          }}
-                        >
-                          {isSoldOut ? 'Sold Out' : `${availableSeats} seats left`}
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        {isAuthenticated && (
-                          <button
-                            onClick={(e) => handleToggleWishlist(flight.id, e)}
-                            style={{
-                              background: wishlistIds.has(flight.id) ? '#fee2e2' : '#f3f4f6',
-                              border: 'none',
-                              borderRadius: '8px',
-                              padding: '0.6rem',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: wishlistIds.has(flight.id) ? '#ef4444' : '#9ca3af',
-                              transition: 'all 0.2s',
-                            }}
-                            title={wishlistIds.has(flight.id) ? 'Remove from wishlist' : 'Save to wishlist'}
-                          >
-                            <Heart size={18} fill={wishlistIds.has(flight.id) ? '#ef4444' : 'none'} />
-                          </button>
-                        )}
-
-                        <Link
-                          to={`/flights/${flight.id}`}
-                          className={`btn ${isSoldOut ? 'btn-secondary' : 'btn-primary'}`}
-                          style={{ minWidth: '120px' }}
-                        >
-                          {isSoldOut ? 'View Flight' : 'Select Flight'}
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {flights.map((flight) => (
+                <FlightCard
+                  key={flight.id}
+                  flight={flight}
+                  isWishlisted={wishlistIds.has(flight.id)}
+                  onToggleWishlist={handleToggleWishlist}
+                  isAuthenticated={isAuthenticated}
+                />
+              ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Mobile Filter Drawer */}
+      {mobileFilterOpen && (
+        <div
+          className="filter-drawer-backdrop"
+          onClick={() => setMobileFilterOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {mobileFilterOpen && (
+        <aside className="filter-drawer" role="dialog" aria-modal="true" aria-label="Filter flights">
+          <div className="filter-drawer-header">
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <SlidersHorizontal size={16} /> Filters & Sorting
+            </h3>
+            <button
+              type="button"
+              className="mobile-drawer-close"
+              onClick={() => setMobileFilterOpen(false)}
+              aria-label="Close filters"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="filter-drawer-body">
+            {/* Price Range */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label className="form-label">Price Range ($)</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                <input
+                  type="number"
+                  placeholder="Min"
+                  className="form-input"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                />
+                <input
+                  type="number"
+                  placeholder="Max"
+                  className="form-input"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Airline */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label className="form-label">Airline</label>
+              <select
+                className="form-select"
+                value={airline}
+                onChange={(e) => setAirline(e.target.value)}
+              >
+                <option value="">All Airlines</option>
+                {availableAirlines.map((al) => (
+                  <option key={al} value={al}>
+                    {al}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Minimum Rating */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label className="form-label">Minimum Rating</label>
+              <select
+                className="form-select"
+                value={minRating}
+                onChange={(e) => setMinRating(e.target.value)}
+              >
+                <option value="">Any Rating</option>
+                <option value="4.0">★ 4.0 & above</option>
+                <option value="4.5">★ 4.5 & above</option>
+                <option value="4.8">★ 4.8 & above</option>
+              </select>
+            </div>
+
+            {/* Max Duration */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label">Max Duration</label>
+              <select
+                className="form-select"
+                value={maxDuration}
+                onChange={(e) => setMaxDuration(e.target.value)}
+              >
+                <option value="">Any Duration</option>
+                <option value="4">Under 4 hours</option>
+                <option value="8">Under 8 hours</option>
+                <option value="12">Under 12 hours</option>
+                <option value="16">Under 16 hours</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="btn btn-secondary"
+                style={{ flex: 1 }}
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  applyFilters();
+                  setMobileFilterOpen(false);
+                }}
+                className="btn btn-primary"
+                style={{ flex: 1 }}
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </aside>
+      )}
     </div>
   );
 }
