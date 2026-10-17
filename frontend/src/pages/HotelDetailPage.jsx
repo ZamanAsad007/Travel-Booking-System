@@ -118,6 +118,8 @@ export default function HotelDetailPage() {
           src={hotelImage}
           alt={hotel.name}
           className="hotel-hero-img"
+          decoding="async"
+          loading="eager"
         />
         <div className="hotel-hero-overlay">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>

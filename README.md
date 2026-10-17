@@ -148,6 +148,27 @@ flowchart LR
 - **Chaos Engineering**: Automated downtime simulation (`tests/chaos/paymentDowntime.test.js`) verifying graceful recovery and Redis inventory hold release during payment service outages.
 - **Prometheus & Grafana Observability**: Pre-configured `/metrics` endpoints across all microservices scraped by Prometheus and visualized in a pre-provisioned Grafana dashboard.
 
+### 9. TravelGo UI Redesign & Design System (Stitch Assisted)
+- **Design Metaphor**: A warm, adventurous *"travel magazine meets boarding pass"* aesthetic replacing generic SaaS components with tactile travel artifacts.
+- **Brand Color Tokens**:
+  - `Ocean Teal` (`#0F766E`): Primary brand color conveying calm oceanic exploration and dependable booking.
+  - `Midnight Navy` (`#0B2545`): Deep contrast for headers, navigation, and strong structural hierarchy.
+  - `Sunset Coral` (`#FF6B4A`): High-intent accent for primary action buttons (`.btn-accent`), urgent booking alerts, and promo stamps.
+  - `Golden Amber` (`#F5B83D`): Warm highlight for star ratings, loyalty bonus points, and membership tiers.
+  - `Warm Sand` (`#FBF7F0`): Natural parchment backdrop softening eye strain during trip planning.
+- **Typography**: Dual Google Font system combining **Fraunces** (expressive editorial serif for headings, numbers, and airport typography) with **DM Sans** (clean, modern geometric sans-serif for body copy and data tables).
+- **Core Visual Motifs**:
+  - **Boarding Pass Cards (`BoardingPass.jsx`)**: Realistic travel tickets featuring airline branding, large airport codes (`JFK ➔ LHR`), flight timelines, perforated tear divider lines with circular edge notches, barcode stubs, and PDF download triggers.
+  - **Dotted Flight Trajectories**: Airplane route indicators across cards and footers symbolizing flight journeys.
+  - **Passport Stamp Badges (`.stamp-badge`)**: Tactile travel stamps for deals, status badges, and loyalty tier indicators.
+  - **Live Saga Progress Tracker (`ProgressTracker.jsx`)**: Real-time progress bar (`Created` ➔ `Payment` ➔ `Confirmed`) powered by SSE event streaming with a pulsing live green beacon and polling fallback detection.
+  - **Photo-First Hotel Cards & Amenity Chips**: High-resolution destination photography with interactive amenity pills (Wi-Fi, Pool, Free Breakfast, Free Cancellation).
+  - **3-Step Checkout Stepper**: Clean visual flow (`Travelers` ➔ `Extras & Add-ons` ➔ `Payment`) with dynamic loyalty point redemption slider ($1 off per 10 points).
+- **Performance & Accessibility (WCAG AA)**:
+  - **Route Code-Splitting**: Async `React.lazy()` chunking reducing initial bundle by >63% (from 905 kB to 333 kB).
+  - **Image Optimization**: `decoding="async"` and `loading="lazy"` on all offscreen images.
+  - **Accessibility**: High-contrast `:focus-visible` keyboard rings, `prefers-reduced-motion` compliance, and contextual `aria-label` tags on all icon-only buttons.
+
 ---
 
 ## 🛠 Tech Stack
