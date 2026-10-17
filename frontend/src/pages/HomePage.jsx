@@ -154,6 +154,18 @@ export default function HomePage() {
     },
   ];
 
+  // City-to-image mapping for vacation package cards
+  const cityImages = {
+    Tokyo: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80',
+    Paris: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80',
+    London: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=800&q=80',
+    'New York': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=800&q=80',
+    Rome: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=800&q=80',
+    Dubai: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
+    Singapore: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=800&q=80',
+    Sydney: 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=800&q=80',
+  };
+
   return (
     <div>
       {/* Travel-Themed Hero Banner */}
@@ -166,6 +178,17 @@ export default function HomePage() {
         <p>
           Discover direct flights, five-star accommodations, and bespoke package deals backed by real-time saga reliability.
         </p>
+        <div className="hero-features-strip">
+          <span className="hero-feature-pill">
+            <CheckCircle2 size={13} style={{ color: 'var(--highlight)' }} /> 56 Global Direct Routes
+          </span>
+          <span className="hero-feature-pill">
+            <CheckCircle2 size={13} style={{ color: 'var(--highlight)' }} /> 10-Min Zero-Conflict Holds
+          </span>
+          <span className="hero-feature-pill">
+            <CheckCircle2 size={13} style={{ color: 'var(--highlight)' }} /> 15% Vacation Package Savings
+          </span>
+        </div>
       </div>
 
       {/* Floating Elevated Search Card */}
@@ -417,84 +440,158 @@ export default function HomePage() {
             {featuredBundles.map((bundle) => (
               <div
                 key={bundle.id}
-                className="card card-hover card-ticket"
-                style={{
-                  border: '1.5px solid var(--border)',
-                  background: 'linear-gradient(to bottom, #FFFAF7, var(--surface))',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  padding: '1.5rem',
-                }}
+                className="card card-hover card-ticket bundle-card-package"
               >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                <div className="bundle-image-container">
+                  <img
+                    src={
+                      cityImages[bundle.city] ||
+                      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80'
+                    }
+                    alt={`${bundle.title} - ${bundle.city}`}
+                    className="bundle-card-image"
+                    loading="lazy"
+                  />
+                  <div className="bundle-image-overlay" />
+                  <div className="bundle-card-badge-top">
                     <span className="stamp-badge stamp-badge-amber">
-                      <Sparkles size={12} /> Save 15%
+                      <Sparkles size={12} /> Save {bundle.discountPercent || 15}%
                     </span>
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                      {bundle.city}
+                    <span className="bundle-city-chip">
+                      <MapPin size={12} /> {bundle.city}
                     </span>
-                  </div>
-
-                  <h3 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: '0.6rem', color: 'var(--secondary)' }}>
-                    {bundle.title}
-                  </h3>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.75rem', marginBottom: '1.25rem' }}>
-                    <div style={{ padding: '0.75rem', background: 'var(--surface)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '0.2rem' }}>
-                        <Plane size={14} /> {bundle.flight.airline}
-                      </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                        {bundle.flight.origin} → {bundle.flight.destination}
-                      </div>
-                    </div>
-
-                    <div style={{ padding: '0.75rem', background: 'var(--surface)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', fontWeight: 700, color: 'var(--secondary)', marginBottom: '0.2rem' }}>
-                        <Hotel size={14} /> {bundle.hotel.name}
-                      </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                        {bundle.room.type}
-                      </div>
-                    </div>
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    borderTop: '1.5px dashed var(--border)',
-                    paddingTop: '1rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: '0.75rem',
-                  }}
-                >
+                <div className="bundle-card-body">
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                      <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                        ${bundle.originalPrice.toFixed(0)}
-                      </span>
-                      <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--accent)', fontFamily: 'var(--font-heading)' }}>
-                        ${bundle.bundlePrice.toFixed(0)}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 700 }}>
-                      Save ${bundle.savings.toFixed(0)} with combo pricing
+                    <h3
+                      style={{
+                        fontSize: '1.3rem',
+                        fontWeight: 800,
+                        marginBottom: '0.6rem',
+                        color: 'var(--secondary)',
+                      }}
+                    >
+                      {bundle.title}
+                    </h3>
+
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '0.75rem',
+                        marginTop: '0.75rem',
+                        marginBottom: '1.25rem',
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: '0.75rem',
+                          background: 'var(--surface)',
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--border)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            color: 'var(--primary)',
+                            marginBottom: '0.2rem',
+                          }}
+                        >
+                          <Plane size={14} /> {bundle.flight.airline}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                          {bundle.flight.origin} → {bundle.flight.destination}
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          padding: '0.75rem',
+                          background: 'var(--surface)',
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--border)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            color: 'var(--secondary)',
+                            marginBottom: '0.2rem',
+                          }}
+                        >
+                          <Hotel size={14} /> {bundle.hotel.name}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                          {bundle.room.type}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleBookBundle(bundle)}
-                    className="btn btn-accent"
-                    style={{ padding: '0.55rem 1.15rem', fontSize: '0.9rem' }}
+                  <div
+                    style={{
+                      borderTop: '1.5px dashed var(--border)',
+                      paddingTop: '1rem',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '0.75rem',
+                    }}
                   >
-                    <span>Book Package</span>
-                    <ArrowRight size={15} />
-                  </button>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                        <span
+                          style={{
+                            textDecoration: 'line-through',
+                            color: 'var(--text-muted)',
+                            fontSize: '0.9rem',
+                          }}
+                        >
+                          ${bundle.originalPrice.toFixed(0)}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '1.5rem',
+                            fontWeight: 800,
+                            color: 'var(--accent)',
+                            fontFamily: 'var(--font-heading)',
+                          }}
+                        >
+                          ${bundle.bundlePrice.toFixed(0)}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          fontSize: '0.75rem',
+                          color: 'var(--success)',
+                          fontWeight: 700,
+                        }}
+                      >
+                        Save ${bundle.savings.toFixed(0)} with combo pricing
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleBookBundle(bundle)}
+                      className="btn btn-accent"
+                      style={{ padding: '0.55rem 1.15rem', fontSize: '0.9rem' }}
+                    >
+                      <span>Book Package</span>
+                      <ArrowRight size={15} />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

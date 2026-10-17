@@ -54,7 +54,7 @@ export default function DestinationCard({
           </span>
         )}
         <div className="destination-arrow-icon">
-          <ArrowUpRight size={16} />
+          <ArrowUpRight size={18} />
         </div>
       </div>
 
