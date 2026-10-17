@@ -419,14 +419,71 @@ export async function seedCatalogData() {
       },
     ];
 
-    for (const f of flights) {
-      await client.query(
-        `INSERT INTO flights (flight_number, airline, origin, destination, departs_at, arrives_at, price, seats_total, avg_rating, review_count)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-         ON CONFLICT (flight_number) DO UPDATE
-         SET avg_rating = COALESCE(flights.avg_rating, EXCLUDED.avg_rating),
-             review_count = COALESCE(flights.review_count, EXCLUDED.review_count)`,
-        [
+    // Generate recurring daily flights from Oct 15, 2026 to Dec 31, 2026 across all routes
+    const allFlights = [...flights];
+    const existingFlightNumbers = new Set(flights.map((f) => f.flightNumber));
+
+    const startDate = new Date('2026-10-15T00:00:00Z');
+    const endDate = new Date('2026-12-31T23:59:59Z');
+
+    for (let d = new Date(startDate); d <= endDate; d.setUTCDate(d.getUTCDate() + 1)) {
+      const yyyy = d.getUTCFullYear();
+      const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(d.getUTCDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const dayCode = `${mm}${dd}`;
+
+      for (const baseFlight of flights) {
+        const originalDep = new Date(baseFlight.departsAt);
+        const originalArr = new Date(baseFlight.arrivesAt);
+        const durationMs = originalArr.getTime() - originalDep.getTime();
+
+        const origDateStr = baseFlight.departsAt.split('T')[0];
+        if (origDateStr === dateStr) {
+          continue;
+        }
+
+        const flightNumber = `${baseFlight.flightNumber}-${dayCode}`;
+        if (existingFlightNumbers.has(flightNumber)) {
+          continue;
+        }
+        existingFlightNumbers.add(flightNumber);
+
+        const timePart = baseFlight.departsAt.split('T')[1];
+        const departsAt = `${dateStr}T${timePart}`;
+        const arrivesAt = new Date(new Date(departsAt).getTime() + durationMs).toISOString();
+
+        const dayOfWeek = d.getUTCDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 5 || dayOfWeek === 6;
+        const priceAdjustment = isWeekend ? Math.round(baseFlight.price * 0.05) : 0;
+        const price = Math.round((baseFlight.price + priceAdjustment) * 100) / 100;
+
+        allFlights.push({
+          flightNumber,
+          airline: baseFlight.airline,
+          origin: baseFlight.origin,
+          destination: baseFlight.destination,
+          departsAt,
+          arrivesAt,
+          price,
+          seatsTotal: baseFlight.seatsTotal,
+          avgRating: baseFlight.avgRating,
+          reviewCount: baseFlight.reviewCount,
+        });
+      }
+    }
+
+    const BATCH_SIZE = 100;
+    for (let i = 0; i < allFlights.length; i += BATCH_SIZE) {
+      const batch = allFlights.slice(i, i + BATCH_SIZE);
+      const values = [];
+      const valueClauses = [];
+      let paramIdx = 1;
+      for (const f of batch) {
+        valueClauses.push(
+          `($${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++}, $${paramIdx++})`
+        );
+        values.push(
           f.flightNumber,
           f.airline,
           f.origin,
@@ -436,11 +493,24 @@ export async function seedCatalogData() {
           f.price,
           f.seatsTotal,
           f.avgRating,
-          f.reviewCount,
-        ]
+          f.reviewCount
+        );
+      }
+
+      await client.query(
+        `INSERT INTO flights (flight_number, airline, origin, destination, departs_at, arrives_at, price, seats_total, avg_rating, review_count)
+         VALUES ${valueClauses.join(', ')}
+         ON CONFLICT (flight_number) DO UPDATE
+         SET departs_at = EXCLUDED.departs_at,
+             arrives_at = EXCLUDED.arrives_at,
+             price = EXCLUDED.price,
+             seats_total = EXCLUDED.seats_total,
+             avg_rating = COALESCE(flights.avg_rating, EXCLUDED.avg_rating),
+             review_count = COALESCE(flights.review_count, EXCLUDED.review_count)`,
+        values
       );
     }
-    console.log(`[catalog-service] Ensured ${flights.length} flights in catalog.`);
+    console.log(`[catalog-service] Ensured ${allFlights.length} flights in catalog across daily dates.`);
 
     // 2. Seed Hotels & Rooms (Idempotent: inserts any missing hotels and room types)
     console.log('[catalog-service] Seeding hotels and rooms...');
