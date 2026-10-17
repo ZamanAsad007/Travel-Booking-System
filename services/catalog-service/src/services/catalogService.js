@@ -86,7 +86,16 @@ export const catalogService = {
   },
 
   async getHotelById(id) {
-    const hotel = await hotelRepository.findById(id);
+    let hotel = await hotelRepository.findById(id);
+    let matchedRoom = null;
+    if (!hotel) {
+      const room = await hotelRepository.findRoomById(id);
+      if (room && room.hotel_id) {
+        matchedRoom = room;
+        hotel = await hotelRepository.findById(room.hotel_id);
+      }
+    }
+
     if (!hotel) {
       const err = new Error('Hotel not found');
       err.statusCode = 404;
@@ -107,6 +116,7 @@ export const catalogService = {
 
     return {
       ...hotel,
+      ...(matchedRoom ? { selected_room: matchedRoom } : {}),
       rooms: enrichedRooms,
     };
   },
