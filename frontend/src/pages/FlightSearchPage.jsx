@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { catalogApi } from '../api/catalog.js';
 import {
@@ -18,6 +18,8 @@ import {
   Filter,
   X,
   Compass,
+  Hotel,
+  Package,
 } from 'lucide-react';
 import LocationSelect from '../components/LocationSelect.jsx';
 import FlightCard from '../components/FlightCard.jsx';
@@ -28,6 +30,7 @@ import { engagementApi } from '../api/engagement.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function FlightSearchPage() {
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [wishlistIds, setWishlistIds] = useState(new Set());
   const [searchParams, setSearchParams] = useSearchParams();
@@ -36,6 +39,9 @@ export default function FlightSearchPage() {
   const [searchExpanded, setSearchExpanded] = useState(false);
   // Mobile filter drawer state
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
+  // Check if deals mode is active (via /flights?deal=bundle)
+  const isDealMode = searchParams.get('deal') === 'bundle';
 
   // Primary search inputs
   const [from, setFrom] = useState(searchParams.get('from')?.toUpperCase() || '');
@@ -111,6 +117,7 @@ export default function FlightSearchPage() {
     }
   };
 
+  // Main Flights search query
   const { data, isLoading, error } = useQuery({
     queryKey: [
       'flights',
@@ -138,8 +145,47 @@ export default function FlightSearchPage() {
       }),
   });
 
+  // Query vacation package deals when in Deals mode
+  const { data: bundlesData, isLoading: bundlesLoading } = useQuery({
+    queryKey: [
+      'deals-bundles',
+      searchParams.get('from'),
+      searchParams.get('to'),
+      searchParams.get('date'),
+    ],
+    queryFn: () =>
+      catalogApi.getBundles({
+        from: searchParams.get('from') || undefined,
+        to: searchParams.get('to') || undefined,
+        date: searchParams.get('date') || undefined,
+        limit: 4,
+      }),
+    enabled: isDealMode,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const packageBundles = bundlesData?.data?.bundles || [];
+
+  const handleBookBundle = (bundle) => {
+    navigate('/checkout', {
+      state: {
+        title: bundle.title,
+        subtitle: `${bundle.flight.airline} • ${bundle.hotel.name} (${bundle.room.type})`,
+        unitPrice: bundle.bundlePrice,
+        originalPrice: bundle.originalPrice,
+        savings: bundle.savings,
+        discountPercent: bundle.discountPercent,
+        items: bundle.items,
+        checkIn: bundle.flight.departsAt?.split('T')[0] || undefined,
+        itemType: 'bundle',
+      },
+    });
+  };
+
   const applyFilters = (overrideParams = {}) => {
+    const currentDeal = searchParams.get('deal');
     const params = {
+      ...(currentDeal ? { deal: currentDeal } : {}),
       ...(from.trim() ? { from: from.trim() } : {}),
       ...(to.trim() ? { to: to.trim() } : {}),
       ...(date.trim() ? { date: date.trim() } : {}),
@@ -151,6 +197,12 @@ export default function FlightSearchPage() {
       ...(sortBy && sortBy !== 'departs_at_asc' ? { sortBy } : {}),
       ...overrideParams,
     };
+
+    // If deal was explicitly cleared in overrideParams, remove it
+    if (overrideParams.hasOwnProperty('deal') && !overrideParams.deal) {
+      delete params.deal;
+    }
+
     setSearchParams(params);
   };
 
@@ -170,13 +222,23 @@ export default function FlightSearchPage() {
     setMinRating('');
     setMaxDuration('');
     setSortBy('departs_at_asc');
-    setSearchParams({});
+    setSearchParams(isDealMode ? { deal: 'bundle' } : {});
     setMobileFilterOpen(false);
   };
 
   const handleSelectFareDate = (newDateStr) => {
     setDate(newDateStr);
     applyFilters({ date: newDateStr });
+  };
+
+  const toggleDealMode = () => {
+    if (isDealMode) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('deal');
+      setSearchParams(next);
+    } else {
+      applyFilters({ deal: 'bundle' });
+    }
   };
 
   const flights = data?.data?.flights || [];
@@ -195,11 +257,19 @@ export default function FlightSearchPage() {
     <div>
       {/* Search Header Banner */}
       <div style={{ marginBottom: '1.5rem' }}>
+        {isDealMode && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--accent)', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>
+            <Sparkles size={16} />
+            <span>Exclusive Deals & Vacation Packages</span>
+          </div>
+        )}
         <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.4rem', color: 'var(--secondary)' }}>
-          Flight Results
+          {isDealMode ? 'Flight & Hotel Deal Packages' : 'Flight Results'}
         </h1>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-          Explore live scheduled flights with real-time seat tracking, fare comparison, and instant saga holds.
+          {isDealMode
+            ? 'Save up to 15% when bundling flights with top-rated boutique hotels, or explore daily scheduled flight deals with real-time seat tracking.'
+            : 'Explore live scheduled flights with real-time seat tracking, fare comparison, and instant saga holds.'}
         </p>
       </div>
 
@@ -218,21 +288,48 @@ export default function FlightSearchPage() {
         <div className="search-summary-meta">
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
             <Calendar size={14} style={{ color: 'var(--primary)' }} />
-            <span>{date ? new Date(date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'Flexible Dates'}</span>
+            <span>{date ? new Date(date + 'T00:00:00').toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'Flexible Dates'}</span>
           </span>
           <span>•</span>
-          <span><strong>{flights.length}</strong> flights found</span>
+          <span><strong>{flights.length}</strong> flights available</span>
+          {isDealMode && (
+            <span
+              className="stamp-badge"
+              style={{
+                marginLeft: '0.4rem',
+                backgroundColor: 'var(--accent-light)',
+                borderColor: 'var(--accent)',
+                color: 'var(--accent)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+              }}
+            >
+              <Sparkles size={11} /> 15% Bundle Deal
+            </span>
+          )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setSearchExpanded((prev) => !prev)}
-          className="btn btn-secondary"
-          style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
-        >
-          <Search size={14} />
-          <span>{searchExpanded ? 'Close Search' : 'Modify Search'}</span>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button
+            type="button"
+            onClick={toggleDealMode}
+            className={`btn ${isDealMode ? 'btn-accent' : 'btn-secondary'}`}
+            style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem' }}
+          >
+            <Sparkles size={14} />
+            <span>{isDealMode ? 'Deals Mode ON' : 'Deals & Packages'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSearchExpanded((prev) => !prev)}
+            className="btn btn-secondary"
+            style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
+          >
+            <Search size={14} />
+            <span>{searchExpanded ? 'Close Search' : 'Modify Search'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Expandable Search Form Drawer */}
@@ -282,6 +379,118 @@ export default function FlightSearchPage() {
         basePrice={lowestPrice}
       />
 
+      {/* Featured Package Deals Showcase (shown in Deal Mode) */}
+      {isDealMode && (
+        <div style={{ marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--secondary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Package size={20} style={{ color: 'var(--accent)' }} />
+                <span>Featured Flight + Hotel Bundles</span>
+                <span className="stamp-badge" style={{ backgroundColor: 'var(--accent-light)', borderColor: 'var(--accent)', color: 'var(--accent)', fontSize: '0.72rem' }}>
+                  15% Combo Discount
+                </span>
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: '0.2rem 0 0 0' }}>
+                Instant booking: flight and luxury hotel combined into a single unified checkout with guaranteed savings.
+              </p>
+            </div>
+          </div>
+
+          {bundlesLoading ? (
+            <div className="grid-2">
+              {[1, 2].map((i) => (
+                <div key={i} className="card" style={{ padding: '1.25rem' }}>
+                  <Skeleton variant="text" width="50%" height="22px" style={{ marginBottom: '0.75rem' }} />
+                  <Skeleton variant="rectangular" height="70px" style={{ marginBottom: '0.75rem' }} />
+                  <Skeleton variant="text" width="40%" height="28px" />
+                </div>
+              ))}
+            </div>
+          ) : packageBundles.length > 0 ? (
+            <div className="grid-2" style={{ gap: '1.25rem' }}>
+              {packageBundles.map((bundle) => (
+                <div
+                  key={bundle.id}
+                  className="card card-hover"
+                  style={{
+                    border: '1.5px solid var(--border)',
+                    background: 'linear-gradient(to bottom, #FFFAF7, var(--surface))',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    padding: '1.25rem',
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                      <span className="stamp-badge" style={{ backgroundColor: 'var(--accent-light)', borderColor: 'var(--accent)', color: 'var(--accent)' }}>
+                        Save ${bundle.savings} (15% OFF)
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                        {bundle.flight.origin} → {bundle.flight.destination}
+                      </span>
+                    </div>
+
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--secondary)', marginBottom: '0.5rem' }}>
+                      {bundle.title}
+                    </h3>
+
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Plane size={14} style={{ color: 'var(--primary)' }} />
+                        <span><strong>{bundle.flight.airline}</strong> (Flight {bundle.flight.flightNumber})</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Hotel size={14} style={{ color: 'var(--primary)' }} />
+                        <span><strong>{bundle.hotel.name}</strong> • {bundle.room.type}</span>
+                        {bundle.hotel.rating && (
+                          <span className="rating-pill" style={{ fontSize: '0.72rem', padding: '0.05rem 0.35rem' }}>
+                            <Star size={10} fill="currentColor" /> {bundle.hotel.rating}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '0.85rem', marginTop: '0.5rem' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                        <span style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--accent)', fontFamily: 'var(--font-heading)' }}>
+                          ${bundle.bundlePrice}
+                        </span>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+                          ${bundle.originalPrice}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Flight + 1 night hotel</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleBookBundle(bundle)}
+                      className="btn btn-accent"
+                      style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                    >
+                      <span>Book Package</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="card" style={{ padding: '1rem 1.25rem', background: 'var(--sand)', border: '1px dashed var(--border)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Package size={20} style={{ color: 'var(--accent)' }} />
+              <span style={{ fontSize: '0.88rem', color: 'var(--text-main)' }}>
+                No pre-bundled hotel packages found for this exact route. Browse the individual flights below or check all dates!
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Main Content: Left Filter Sidebar + Right Results List */}
       <div style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: '2rem', alignItems: 'flex-start' }}>
         {/* Desktop Filter Sidebar */}
@@ -297,6 +506,28 @@ export default function FlightSearchPage() {
             >
               <RotateCcw size={12} /> Reset
             </button>
+          </div>
+
+          {/* Deal Mode Filter Toggle */}
+          <div style={{ marginBottom: '1.25rem', padding: '0.75rem', background: isDealMode ? 'var(--accent-light)' : 'var(--sand)', borderRadius: 'var(--radius-sm)', border: `1px solid ${isDealMode ? 'var(--accent)' : 'var(--border)'}` }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', margin: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--secondary)' }}>
+              <input
+                type="checkbox"
+                checked={isDealMode}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    applyFilters({ deal: 'bundle' });
+                  } else {
+                    const next = new URLSearchParams(searchParams);
+                    next.delete('deal');
+                    setSearchParams(next);
+                  }
+                }}
+                style={{ accentColor: 'var(--accent)' }}
+              />
+              <Sparkles size={14} style={{ color: 'var(--accent)' }} />
+              <span>Vacation Deals (15% OFF)</span>
+            </label>
           </div>
 
           {/* Price Range Filter */}
@@ -484,10 +715,14 @@ export default function FlightSearchPage() {
           ) : flights.length === 0 ? (
             <EmptyState
               icon={Compass}
-              title="No flights match your criteria"
-              description="Try adjusting your departure date, price range, or clearing your airline filters to see available flights."
-              actionText="Clear All Filters"
-              onAction={handleResetFilters}
+              title={date ? `No flights found for ${new Date(date + 'T00:00:00').toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}` : "No flights match your criteria"}
+              description={
+                date
+                  ? "We couldn't find scheduled flights on this specific date. Try viewing flexible dates to see available flights across all scheduled days."
+                  : "Try adjusting your departure date, price range, or clearing your airline filters to see available flights."
+              }
+              actionText={date ? "View All Available Dates" : "Clear All Filters"}
+              onAction={date ? () => handleSelectFareDate('') : handleResetFilters}
             />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -498,6 +733,7 @@ export default function FlightSearchPage() {
                   isWishlisted={wishlistIds.has(flight.id)}
                   onToggleWishlist={handleToggleWishlist}
                   isAuthenticated={isAuthenticated}
+                  dealBadge={isDealMode ? '15% Combo Deal Available' : undefined}
                 />
               ))}
             </div>
@@ -531,6 +767,28 @@ export default function FlightSearchPage() {
           </div>
 
           <div className="filter-drawer-body">
+            {/* Deal Mode Toggle in Mobile */}
+            <div style={{ marginBottom: '1.25rem', padding: '0.75rem', background: isDealMode ? 'var(--accent-light)' : 'var(--sand)', borderRadius: 'var(--radius-sm)', border: `1px solid ${isDealMode ? 'var(--accent)' : 'var(--border)'}` }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', margin: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--secondary)' }}>
+                <input
+                  type="checkbox"
+                  checked={isDealMode}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      applyFilters({ deal: 'bundle' });
+                    } else {
+                      const next = new URLSearchParams(searchParams);
+                      next.delete('deal');
+                      setSearchParams(next);
+                    }
+                  }}
+                  style={{ accentColor: 'var(--accent)' }}
+                />
+                <Sparkles size={14} style={{ color: 'var(--accent)' }} />
+                <span>Vacation Deals (15% OFF)</span>
+              </label>
+            </div>
+
             {/* Price Range */}
             <div style={{ marginBottom: '1.25rem' }}>
               <label className="form-label">Price Range ($)</label>

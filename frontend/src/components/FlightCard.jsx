@@ -19,6 +19,7 @@ export default function FlightCard({
   isWishlisted,
   onToggleWishlist,
   isAuthenticated,
+  dealBadge,
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -79,6 +80,20 @@ export default function FlightCard({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {dealBadge && (
+              <span
+                className="stamp-badge"
+                style={{
+                  backgroundColor: 'var(--accent-light)',
+                  borderColor: 'var(--accent)',
+                  color: 'var(--accent)',
+                  fontSize: '0.68rem',
+                  padding: '0.1rem 0.45rem',
+                }}
+              >
+                {dealBadge}
+              </span>
+            )}
             {isSoldOut ? (
               <span className="badge badge-cancelled">Sold Out</span>
             ) : isFewSeats ? (
