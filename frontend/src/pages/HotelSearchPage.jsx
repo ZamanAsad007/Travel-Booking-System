@@ -342,147 +342,114 @@ export default function HotelSearchPage() {
             </div>
           ) : (
             <div className="grid-2">
-              {hotels.map((hotel) => (
-                <div
-                  key={hotel.id}
-                  className="card card-hover"
-                  style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
-                >
-                  <div>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'flex-start',
-                        marginBottom: '0.75rem',
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          color: '#d97706',
-                          fontSize: '0.85rem',
-                          fontWeight: 700,
-                        }}
-                      >
-                        <Star size={16} fill="#d97706" />
-                        <span>{parseFloat(hotel.avg_rating || hotel.rating || 4.5).toFixed(1)} / 5.0</span>
-                        {hotel.review_count > 0 && (
-                          <span style={{ color: 'var(--text-muted)', fontWeight: 400, fontSize: '0.78rem' }}>
-                            ({hotel.review_count} reviews)
-                          </span>
-                        )}
-                      </div>
-                      <span
-                        style={{
-                          fontSize: '0.8rem',
-                          background: '#f1f5f9',
-                          padding: '0.2rem 0.5rem',
-                          borderRadius: '4px',
-                          color: 'var(--text-muted)',
-                        }}
-                      >
-                        {hotel.city}
-                      </span>
-                    </div>
+              {hotels.map((hotel) => {
+                const hotelImage =
+                  hotel.image_url ||
+                  'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80';
+                const isWishlisted = wishlistIds.has(hotel.id);
 
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.35rem' }}>
-                      {hotel.name}
-                    </h3>
-                    <p
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        color: 'var(--text-muted)',
-                        fontSize: '0.88rem',
-                        marginBottom: '0.5rem',
-                      }}
-                    >
-                      <MapPin size={14} />
-                      <span>{hotel.address || hotel.city}</span>
-                    </p>
+                return (
+                  <div key={hotel.id} className="hotel-catalog-card">
+                    {/* Photo-First Image Section */}
+                    <div className="hotel-img-wrapper">
+                      <img
+                        src={hotelImage}
+                        alt={hotel.name}
+                        className="hotel-img-main"
+                        loading="lazy"
+                      />
 
-                    {hotel.free_cancellation && (
-                      <div
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.3rem',
-                          fontSize: '0.75rem',
-                          color: '#15803d',
-                          background: '#f0fdf4',
-                          padding: '0.15rem 0.5rem',
-                          borderRadius: '4px',
-                          fontWeight: 600,
-                          marginBottom: '0.75rem',
-                        }}
-                      >
-                        <ShieldCheck size={13} /> Free Cancellation Available
-                      </div>
-                    )}
-                  </div>
-
-                  <div
-                    style={{
-                      borderTop: '1px solid var(--border)',
-                      paddingTop: '1rem',
-                      marginTop: '0.75rem',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                        Starting from
-                      </span>
-                      <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--secondary)' }}>
-                        ${parseFloat(hotel.starting_price || hotel.min_price || 150).toFixed(0)}{' '}
-                        <span
-                          style={{ fontSize: '0.8rem', fontWeight: 400, color: 'var(--text-muted)' }}
-                        >
-                          / night
+                      <div className="hotel-img-badges">
+                        <span className="rating-pill">
+                          <Star size={11} fill="currentColor" />
+                          {parseFloat(hotel.avg_rating || hotel.rating || 4.5).toFixed(1)}
+                        </span>
+                        <span className="stamp-badge stamp-badge-navy" style={{ background: 'rgba(255,255,255,0.95)', border: 'none' }}>
+                          {hotel.city}
                         </span>
                       </div>
-                    </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       {isAuthenticated && (
                         <button
+                          type="button"
                           onClick={(e) => handleToggleWishlist(hotel.id, e)}
-                          style={{
-                            background: wishlistIds.has(hotel.id) ? '#fee2e2' : '#f3f4f6',
-                            border: 'none',
-                            borderRadius: '8px',
-                            padding: '0.5rem',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: wishlistIds.has(hotel.id) ? '#ef4444' : '#9ca3af',
-                            transition: 'all 0.2s',
-                          }}
-                          title={wishlistIds.has(hotel.id) ? 'Remove from wishlist' : 'Save to wishlist'}
+                          className={`hotel-card-wishlist ${isWishlisted ? 'active' : ''}`}
+                          title={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+                          aria-label="Wishlist toggle"
                         >
-                          <Heart size={18} fill={wishlistIds.has(hotel.id) ? '#ef4444' : 'none'} />
+                          <Heart size={16} fill={isWishlisted ? 'currentColor' : 'none'} />
                         </button>
                       )}
+                    </div>
 
-                      <Link
-                        to={`/hotels/${hotel.id}`}
-                        className="btn btn-primary"
-                        style={{ backgroundColor: 'var(--secondary)', padding: '0.5rem 1rem' }}
+                    {/* Card Content Body */}
+                    <div className="hotel-card-info">
+                      <div>
+                        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '0 0 0.35rem 0', color: 'var(--secondary)' }}>
+                          {hotel.name}
+                        </h3>
+                        <p
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            color: 'var(--text-muted)',
+                            fontSize: '0.82rem',
+                            margin: 0,
+                          }}
+                        >
+                          <MapPin size={13} />
+                          <span>{hotel.address || `${hotel.city} Center`}</span>
+                        </p>
+
+                        {/* Amenity Chips */}
+                        <div className="amenity-chip-row">
+                          <span className="amenity-chip">Free Wi-Fi</span>
+                          <span className="amenity-chip">Swimming Pool</span>
+                          <span className="amenity-chip">Breakfast</span>
+                          {hotel.free_cancellation && (
+                            <span className="amenity-chip" style={{ color: 'var(--primary)', borderColor: 'var(--primary)' }}>
+                              <ShieldCheck size={11} /> Free Cancellation
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div
+                        style={{
+                          borderTop: '1px solid var(--border)',
+                          paddingTop: '0.85rem',
+                          marginTop: '0.5rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
                       >
-                        <span>View Rooms</span>
-                        <ArrowRight size={15} />
-                      </Link>
+                        <div>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>
+                            Starting from
+                          </span>
+                          <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--primary)', fontFamily: 'var(--font-heading)' }}>
+                            ${parseFloat(hotel.starting_price || hotel.min_price || 150).toFixed(0)}{' '}
+                            <span style={{ fontSize: '0.78rem', fontWeight: 400, color: 'var(--text-muted)', fontFamily: 'var(--font-body)' }}>
+                              / night
+                            </span>
+                          </div>
+                        </div>
+
+                        <Link
+                          to={`/hotels/${hotel.id}`}
+                          className="btn btn-accent"
+                          style={{ padding: '0.5rem 0.95rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                        >
+                          <span>View Rooms</span>
+                          <ArrowRight size={14} />
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

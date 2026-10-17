@@ -106,15 +106,47 @@ export default function HotelDetailPage() {
   }
 
   const rooms = hotel.rooms || [];
+  const hotelImage =
+    hotel.image_url ||
+    'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80';
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '960px', margin: '0 auto', paddingBottom: '3rem' }}>
+      {/* Photo-First Hero Gallery */}
+      <div className="hotel-hero-gallery">
+        <img
+          src={hotelImage}
+          alt={hotel.name}
+          className="hotel-hero-img"
+        />
+        <div className="hotel-hero-overlay">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
+            <span className="rating-pill" style={{ background: '#F5B83D', color: '#1B2B34' }}>
+              <Star size={12} fill="currentColor" />
+              {parseFloat(hotel.rating || 4.8).toFixed(1)}
+            </span>
+            <span className="stamp-badge stamp-badge-navy" style={{ background: 'rgba(255,255,255,0.95)', border: 'none' }}>
+              {hotel.city}
+            </span>
+          </div>
+
+          <h1 style={{ fontSize: '2.25rem', fontWeight: 800, margin: '0 0 0.35rem 0', color: '#FFFFFF', textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+            {hotel.name}
+          </h1>
+
+          <p style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem', margin: 0 }}>
+            <MapPin size={16} />
+            <span>{hotel.address || `${hotel.city} Center`}</span>
+          </p>
+        </div>
+      </div>
+
       <div className="card" style={{ marginBottom: '2rem' }}>
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             flexWrap: 'wrap',
             gap: '1rem',
             borderBottom: '1px solid var(--border)',
@@ -122,86 +154,69 @@ export default function HotelDetailPage() {
             marginBottom: '1.5rem',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  color: '#d97706',
-                  marginBottom: '0.35rem',
-                }}
-              >
-                <Star size={18} fill="#d97706" />
-                <span style={{ fontWeight: 700 }}>
-                  {parseFloat(hotel.rating || 4.5).toFixed(1)} Star Luxury Accommodation
-                </span>
-              </div>
-              <h1 style={{ fontSize: '2rem', fontWeight: 800, margin: '0.25rem 0' }}>{hotel.name}</h1>
-              <p
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  color: 'var(--text-muted)',
-                }}
-              >
-                <MapPin size={16} />
-                <span>{hotel.city}</span>
-              </p>
-            </div>
+          {/* Amenity Chips */}
+          <div className="amenity-chip-row" style={{ margin: 0 }}>
+            <span className="amenity-chip">Free Wi-Fi</span>
+            <span className="amenity-chip">Infinity Pool</span>
+            <span className="amenity-chip">Full Spa</span>
+            <span className="amenity-chip">Complimentary Breakfast</span>
+            <span className="amenity-chip" style={{ color: 'var(--primary)', borderColor: 'var(--primary)' }}>
+              <CheckCircle size={12} /> Saga Protected
+            </span>
+          </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              {isAuthenticated && (
-                <button
-                  onClick={() => setShowAlertModal(true)}
-                  className="btn btn-secondary"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    padding: '0.5rem 1rem',
-                  }}
-                  title="Set price drop alert"
-                >
-                  <Bell size={18} />
-                  <span>Price Alert</span>
-                </button>
-              )}
-
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {isAuthenticated && (
               <button
-                onClick={handleToggleWishlist}
+                onClick={() => setShowAlertModal(true)}
                 className="btn btn-secondary"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.4rem',
-                  color: isWishlisted ? '#ef4444' : '#6b7280',
-                  borderColor: isWishlisted ? '#fca5a5' : '#e5e7eb',
-                  background: isWishlisted ? '#fef2f2' : '#fff',
-                  padding: '0.5rem 1rem',
+                  padding: '0.45rem 0.9rem',
+                  fontSize: '0.85rem',
                 }}
-                title={isWishlisted ? 'Saved to Wishlist' : 'Save to Wishlist'}
+                title="Set price drop alert"
               >
-                <Heart size={18} fill={isWishlisted ? '#ef4444' : 'none'} />
-                <span>{isWishlisted ? 'Saved' : 'Save Hotel'}</span>
+                <Bell size={16} />
+                <span>Price Alert</span>
               </button>
-            </div>
+            )}
+
+            <button
+              onClick={handleToggleWishlist}
+              className="btn btn-secondary"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                color: isWishlisted ? 'var(--accent)' : 'var(--text-muted)',
+                borderColor: isWishlisted ? '#fca5a5' : 'var(--border)',
+                background: isWishlisted ? '#FFF1EE' : '#FFF',
+                padding: '0.45rem 0.9rem',
+                fontSize: '0.85rem',
+              }}
+              title={isWishlisted ? 'Saved to Wishlist' : 'Save to Wishlist'}
+            >
+              <Heart size={16} fill={isWishlisted ? 'currentColor' : 'none'} />
+              <span>{isWishlisted ? 'Saved' : 'Save Hotel'}</span>
+            </button>
           </div>
         </div>
 
         {/* Date Preferences */}
         <div
           style={{
-            background: '#f8fafc',
+            background: '#FAF7F2',
             padding: '1.25rem',
             borderRadius: 'var(--radius-md)',
-            marginBottom: '1.5rem',
+            border: '1px solid var(--border)',
+            marginBottom: '1.75rem',
           }}
         >
-          <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.75rem' }}>
-            Stay Dates (Optional)
+          <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--secondary)' }}>
+            Choose Your Stay Dates
           </h4>
           <div className="grid-2">
             <div>
@@ -226,7 +241,7 @@ export default function HotelDetailPage() {
         </div>
 
         {/* Available Rooms Section */}
-        <h2 style={{ fontSize: '1.35rem', fontWeight: 700, marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '1.25rem', color: 'var(--secondary)' }}>
           Available Rooms & Suites
         </h2>
 
@@ -313,11 +328,11 @@ export default function HotelDetailPage() {
                     <button
                       onClick={() => handleBookRoom(room)}
                       disabled={isFull}
-                      className="btn btn-primary"
-                      style={{ minWidth: '120px' }}
+                      className="btn btn-accent"
+                      style={{ minWidth: '130px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
                     >
-                      <span>Book Room</span>
-                      <ArrowRight size={16} />
+                      <span>Reserve Room</span>
+                      <ArrowRight size={15} />
                     </button>
                   </div>
                 </div>
