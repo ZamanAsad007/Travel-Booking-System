@@ -142,6 +142,7 @@ export default function FlightSearchPage() {
         minRating: searchParams.get('minRating') || undefined,
         maxDuration: searchParams.get('maxDuration') || undefined,
         sortBy: searchParams.get('sortBy') || undefined,
+        limit: 50,
       }),
   });
 
@@ -158,7 +159,7 @@ export default function FlightSearchPage() {
         from: searchParams.get('from') || undefined,
         to: searchParams.get('to') || undefined,
         date: searchParams.get('date') || undefined,
-        limit: 4,
+        limit: 6,
       }),
     enabled: isDealMode,
     staleTime: 1000 * 60 * 5,
@@ -201,6 +202,11 @@ export default function FlightSearchPage() {
     // If deal was explicitly cleared in overrideParams, remove it
     if (overrideParams.hasOwnProperty('deal') && !overrideParams.deal) {
       delete params.deal;
+    }
+
+    // If date was explicitly cleared in overrideParams, remove it
+    if (overrideParams.hasOwnProperty('date') && !overrideParams.date) {
+      delete params.date;
     }
 
     setSearchParams(params);
