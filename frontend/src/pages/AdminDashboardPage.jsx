@@ -245,14 +245,14 @@ export default function AdminDashboardPage() {
       {message && (
         <div style={{ backgroundColor: '#ecfdf5', color: '#065f46', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #a7f3d0' }}>
           <span>{message}</span>
-          <button onClick={() => setMessage(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>×</button>
+          <button onClick={() => setMessage(null)} aria-label="Dismiss success message" style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>×</button>
         </div>
       )}
 
       {error && (
         <div style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #fca5a5' }}>
           <span>{error}</span>
-          <button onClick={() => setError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>×</button>
+          <button onClick={() => setError(null)} aria-label="Dismiss error message" style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>×</button>
         </div>
       )}
 
@@ -371,7 +371,7 @@ export default function AdminDashboardPage() {
               </div>
 
               {/* Charts Section */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
                 {/* Revenue Timeline */}
                 <div className="card" style={{ padding: '1.5rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
                   <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--secondary)' }}>
@@ -572,6 +572,7 @@ export default function AdminDashboardPage() {
                           onClick={() => handleDeleteFlight(f.id)}
                           style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer' }}
                           title="Delete flight"
+                          aria-label={`Delete flight ${f.flight_number}`}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -756,6 +757,7 @@ export default function AdminDashboardPage() {
                           onClick={() => handleDeleteHotel(h.id)}
                           style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer' }}
                           title="Delete hotel"
+                          aria-label={`Delete hotel ${h.name}`}
                         >
                           <Trash2 size={16} />
                         </button>

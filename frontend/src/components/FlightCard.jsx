@@ -208,7 +208,7 @@ export default function FlightCard({
               onClick={(e) => onToggleWishlist(flight.id, e)}
               className={`stub-wishlist-btn ${isWishlisted ? 'active' : ''}`}
               title={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
-              aria-label="Wishlist toggle"
+              aria-label={isWishlisted ? 'Remove flight from wishlist' : 'Save flight to wishlist'}
             >
               <Heart size={16} fill={isWishlisted ? 'currentColor' : 'none'} />
             </button>

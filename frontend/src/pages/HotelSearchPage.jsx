@@ -375,7 +375,7 @@ export default function HotelSearchPage() {
                           onClick={(e) => handleToggleWishlist(hotel.id, e)}
                           className={`hotel-card-wishlist ${isWishlisted ? 'active' : ''}`}
                           title={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
-                          aria-label="Wishlist toggle"
+                          aria-label={isWishlisted ? 'Remove hotel from wishlist' : 'Save hotel to wishlist'}
                         >
                           <Heart size={16} fill={isWishlisted ? 'currentColor' : 'none'} />
                         </button>
