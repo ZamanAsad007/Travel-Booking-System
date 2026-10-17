@@ -12,6 +12,27 @@ Runs 100% locally with a single command — no external cloud hosting required.
 
 ---
 
+## 🎬 Application Demo & Workflow Walkthrough
+
+<p align="center">
+  <img src="docs/assets/travel-booking-workflow.gif" alt="Travel Booking System End-to-End Workflow Demo" width="100%" />
+</p>
+
+<details open>
+<summary><b>Walkthrough Breakdown (6 End-to-End Stages)</b></summary>
+<br/>
+
+1. **56-Route Flight & Vacation Search**: Full bidirectional coverage across 8 global airports with real-time seat availability & dynamic demand multiplier.
+2. **Interactive 7-Day Fare Strip Calendar**: Daily lowest fare strip with immediate date hopping and real-time seat tracking.
+3. **Curated Vacation Package Bundles**: Automatic flight + 5-star hotel pairings with integrated 15% combo discounts.
+4. **Unified Multi-Item Checkout & Redis Holds**: 10-minute temporary seat and room reservations backed by Redis TTL keys.
+5. **Real-Time Event-Driven Saga Choreography**: Distributed transaction status progression (`BookingCreated` &rarr; `PaymentProcessed` &rarr; `TicketIssued`) streamed over SSE.
+6. **Digital Boarding Pass & Loyalty Rewards**: Barcode pass with printable PDF download, Mailpit e-ticket delivery, and loyalty points ledger updates.
+
+</details>
+
+---
+
 ## 🏛 Architecture Diagram
 
 ```mermaid
