@@ -82,7 +82,7 @@ export default function WishlistPage() {
           </div>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1.5rem' }}>
           {wishlist.map((item) => {
             const isFlight = item.item_type?.toLowerCase() === 'flight';
             const detail = itemsDetails[item.item_id];

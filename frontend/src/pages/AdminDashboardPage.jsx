@@ -371,7 +371,7 @@ export default function AdminDashboardPage() {
               </div>
 
               {/* Charts Section */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
                 {/* Revenue Timeline */}
                 <div className="card" style={{ padding: '1.5rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
                   <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--secondary)' }}>
