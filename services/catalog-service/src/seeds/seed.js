@@ -799,7 +799,9 @@ export async function seedCatalogData() {
         values
       );
     }
-    console.log(`[catalog-service] Ensured ${allFlights.length} flights in catalog across daily dates.`);
+    console.log(
+      `[catalog-service] Ensured ${allFlights.length} flights in catalog across daily dates.`
+    );
 
     // 2. Seed Hotels & Rooms (Idempotent: inserts any missing hotels and room types)
     console.log('[catalog-service] Seeding hotels and rooms...');
