@@ -19,7 +19,7 @@ import {
   X,
   Compass,
 } from 'lucide-react';
-import AutocompleteInput from '../components/AutocompleteInput.jsx';
+import LocationSelect from '../components/LocationSelect.jsx';
 import FlightCard from '../components/FlightCard.jsx';
 import FareStrip from '../components/FareStrip.jsx';
 import Skeleton from '../components/Skeleton.jsx';
@@ -239,24 +239,22 @@ export default function FlightSearchPage() {
       {searchExpanded && (
         <div className="card" style={{ marginBottom: '1.75rem', border: '1.5px solid var(--primary)', animation: 'fadeIn 0.2s ease-out' }}>
           <form onSubmit={handleSearchSubmit} className="grid-4" style={{ alignItems: 'flex-end' }}>
-            <AutocompleteInput
+            <LocationSelect
               label="From (Origin)"
-              placeholder="e.g. JFK or New York"
+              placeholder="All Origins"
               value={from}
               onChange={setFrom}
-              onSelect={(val) => setFrom(val)}
               icon={Plane}
-              filterType="airport"
+              type="airport"
             />
 
-            <AutocompleteInput
+            <LocationSelect
               label="To (Destination)"
-              placeholder="e.g. LHR or London"
+              placeholder="All Destinations"
               value={to}
               onChange={setTo}
-              onSelect={(val) => setTo(val)}
               icon={MapPin}
-              filterType="airport"
+              type="airport"
             />
 
             <div className="form-group" style={{ marginBottom: 0 }}>
