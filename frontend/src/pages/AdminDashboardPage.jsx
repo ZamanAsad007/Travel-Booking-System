@@ -25,6 +25,7 @@ import {
   Trash2,
   Calendar,
   Layers,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -230,39 +231,42 @@ export default function AdminDashboardPage() {
   return (
     <div className="container" style={{ padding: '2rem 1rem', maxWidth: '1200px' }}>
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+        <span className="stamp-badge stamp-badge-navy" style={{ marginBottom: '0.65rem' }}>
+          <ShieldCheck size={12} /> Management Portal
+        </span>
+        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '2.1rem', fontWeight: 800, color: 'var(--secondary)', marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>
           Admin Dashboard
         </h1>
-        <p style={{ color: 'var(--text-muted)' }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0 }}>
           Manage catalog inventory, monitor system analytics, and view bookings.
         </p>
       </div>
 
       {message && (
-        <div style={{ backgroundColor: '#ecfdf5', color: '#065f46', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ backgroundColor: '#ecfdf5', color: '#065f46', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #a7f3d0' }}>
           <span>{message}</span>
           <button onClick={() => setMessage(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>×</button>
         </div>
       )}
 
       {error && (
-        <div style={{ backgroundColor: '#fef2f2', color: '#991b1b', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ backgroundColor: 'var(--danger-bg)', color: 'var(--danger)', padding: '0.75rem 1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #fca5a5' }}>
           <span>{error}</span>
           <button onClick={() => setError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>×</button>
         </div>
       )}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '2px solid var(--border-color, #e5e7eb)', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '2px solid var(--border)', marginBottom: '2rem' }}>
         <button
           onClick={() => setActiveTab('overview')}
           style={{
             padding: '0.75rem 1.25rem',
             background: 'none',
             border: 'none',
-            borderBottom: activeTab === 'overview' ? '3px solid var(--primary-color, #2563eb)' : '3px solid transparent',
+            borderBottom: activeTab === 'overview' ? '3px solid var(--primary)' : '3px solid transparent',
             fontWeight: activeTab === 'overview' ? 700 : 500,
-            color: activeTab === 'overview' ? 'var(--primary-color, #2563eb)' : 'var(--text-muted)',
+            color: activeTab === 'overview' ? 'var(--primary)' : 'var(--text-muted)',
             cursor: 'pointer',
             fontSize: '1rem',
           }}
@@ -275,9 +279,9 @@ export default function AdminDashboardPage() {
             padding: '0.75rem 1.25rem',
             background: 'none',
             border: 'none',
-            borderBottom: activeTab === 'flights' ? '3px solid var(--primary-color, #2563eb)' : '3px solid transparent',
+            borderBottom: activeTab === 'flights' ? '3px solid var(--primary)' : '3px solid transparent',
             fontWeight: activeTab === 'flights' ? 700 : 500,
-            color: activeTab === 'flights' ? 'var(--primary-color, #2563eb)' : 'var(--text-muted)',
+            color: activeTab === 'flights' ? 'var(--primary)' : 'var(--text-muted)',
             cursor: 'pointer',
             fontSize: '1rem',
           }}
@@ -290,9 +294,9 @@ export default function AdminDashboardPage() {
             padding: '0.75rem 1.25rem',
             background: 'none',
             border: 'none',
-            borderBottom: activeTab === 'hotels' ? '3px solid var(--primary-color, #2563eb)' : '3px solid transparent',
+            borderBottom: activeTab === 'hotels' ? '3px solid var(--primary)' : '3px solid transparent',
             fontWeight: activeTab === 'hotels' ? 700 : 500,
-            color: activeTab === 'hotels' ? 'var(--primary-color, #2563eb)' : 'var(--text-muted)',
+            color: activeTab === 'hotels' ? 'var(--primary)' : 'var(--text-muted)',
             cursor: 'pointer',
             fontSize: '1rem',
           }}
@@ -305,9 +309,9 @@ export default function AdminDashboardPage() {
             padding: '0.75rem 1.25rem',
             background: 'none',
             border: 'none',
-            borderBottom: activeTab === 'bookings' ? '3px solid var(--primary-color, #2563eb)' : '3px solid transparent',
+            borderBottom: activeTab === 'bookings' ? '3px solid var(--primary)' : '3px solid transparent',
             fontWeight: activeTab === 'bookings' ? 700 : 500,
-            color: activeTab === 'bookings' ? 'var(--primary-color, #2563eb)' : 'var(--text-muted)',
+            color: activeTab === 'bookings' ? 'var(--primary)' : 'var(--text-muted)',
             cursor: 'pointer',
             fontSize: '1rem',
           }}
@@ -325,42 +329,42 @@ export default function AdminDashboardPage() {
             <>
               {/* KPI Cards */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
-                <div className="card" style={{ padding: '1.5rem', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                <div className="card" style={{ padding: '1.5rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 600 }}>Total Bookings</span>
-                    <TrendingUp size={20} color="#2563eb" />
+                    <TrendingUp size={20} color="var(--secondary)" />
                   </div>
-                  <div style={{ fontSize: '2rem', fontWeight: 800, marginTop: '0.5rem', color: 'var(--text-main)' }}>
+                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '2.1rem', fontWeight: 800, marginTop: '0.5rem', color: 'var(--secondary)' }}>
                     {stats.totalBookings}
                   </div>
                 </div>
 
-                <div className="card" style={{ padding: '1.5rem', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                <div className="card" style={{ padding: '1.5rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 600 }}>Total Revenue</span>
-                    <DollarSign size={20} color="#16a34a" />
+                    <DollarSign size={20} color="var(--primary)" />
                   </div>
-                  <div style={{ fontSize: '2rem', fontWeight: 800, marginTop: '0.5rem', color: '#16a34a' }}>
+                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '2.1rem', fontWeight: 800, marginTop: '0.5rem', color: 'var(--primary)' }}>
                     ${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                 </div>
 
-                <div className="card" style={{ padding: '1.5rem', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                <div className="card" style={{ padding: '1.5rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 600 }}>Confirmed Trips</span>
-                    <PackageCheck size={20} color="#0d9488" />
+                    <PackageCheck size={20} color="var(--primary)" />
                   </div>
-                  <div style={{ fontSize: '2rem', fontWeight: 800, marginTop: '0.5rem', color: 'var(--text-main)' }}>
+                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '2.1rem', fontWeight: 800, marginTop: '0.5rem', color: 'var(--secondary)' }}>
                     {stats.confirmedBookings}
                   </div>
                 </div>
 
-                <div className="card" style={{ padding: '1.5rem', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                <div className="card" style={{ padding: '1.5rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 600 }}>Cancelled Bookings</span>
-                    <Ban size={20} color="#dc2626" />
+                    <Ban size={20} color="var(--accent)" />
                   </div>
-                  <div style={{ fontSize: '2rem', fontWeight: 800, marginTop: '0.5rem', color: 'var(--text-main)' }}>
+                  <div style={{ fontFamily: 'var(--font-heading)', fontSize: '2.1rem', fontWeight: 800, marginTop: '0.5rem', color: '#dc2626' }}>
                     {stats.cancelledBookings}
                   </div>
                 </div>
@@ -369,22 +373,22 @@ export default function AdminDashboardPage() {
               {/* Charts Section */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
                 {/* Revenue Timeline */}
-                <div className="card" style={{ padding: '1.5rem', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-main)' }}>
+                <div className="card" style={{ padding: '1.5rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+                  <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--secondary)' }}>
                     Revenue & Bookings Over Time
                   </h3>
                   {stats.timeline && stats.timeline.length > 0 ? (
                     <div style={{ width: '100%', height: 260 }}>
                       <ResponsiveContainer>
                         <LineChart data={stats.timeline}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" />
-                          <YAxis yAxisId="left" />
-                          <YAxis yAxisId="right" orientation="right" />
-                          <Tooltip />
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                          <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={12} />
+                          <YAxis yAxisId="left" stroke="var(--text-muted)" fontSize={12} />
+                          <YAxis yAxisId="right" orientation="right" stroke="var(--text-muted)" fontSize={12} />
+                          <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} />
                           <Legend />
-                          <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#16a34a" name="Revenue ($)" strokeWidth={2} />
-                          <Line yAxisId="right" type="monotone" dataKey="count" stroke="#2563eb" name="Bookings" strokeWidth={2} />
+                          <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#0F766E" name="Revenue ($)" strokeWidth={2.5} dot={{ fill: '#0F766E', r: 3 }} />
+                          <Line yAxisId="right" type="monotone" dataKey="count" stroke="#FF6B4A" name="Bookings" strokeWidth={2.5} dot={{ fill: '#FF6B4A', r: 3 }} />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
@@ -394,19 +398,19 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Status Breakdown */}
-                <div className="card" style={{ padding: '1.5rem', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--text-main)' }}>
+                <div className="card" style={{ padding: '1.5rem', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+                  <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', color: 'var(--secondary)' }}>
                     Bookings by Status
                   </h3>
                   {stats.bookingsByStatus && stats.bookingsByStatus.length > 0 ? (
                     <div style={{ width: '100%', height: 260 }}>
                       <ResponsiveContainer>
                         <BarChart data={stats.bookingsByStatus}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="status" />
-                          <YAxis />
-                          <Tooltip />
-                          <Bar dataKey="count" fill="#3b82f6" name="Total Count" radius={[4, 4, 0, 0]} />
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                          <XAxis dataKey="status" stroke="var(--text-muted)" fontSize={12} />
+                          <YAxis stroke="var(--text-muted)" fontSize={12} />
+                          <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }} />
+                          <Bar dataKey="count" fill="#0F766E" name="Total Count" radius={[6, 6, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -436,8 +440,8 @@ export default function AdminDashboardPage() {
 
           {/* Modal / Form for Flight */}
           {showFlightModal && (
-            <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', padding: '1.5rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-              <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 700 }}>New Flight Details</h3>
+            <div style={{ background: 'var(--surface-sand)', border: '1.5px solid var(--border)', padding: '1.5rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', boxShadow: 'var(--shadow-sm)' }}>
+              <h3 style={{ marginBottom: '1rem', fontSize: '1.15rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--secondary)' }}>New Flight Details</h3>
               <form onSubmit={handleCreateFlight} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>Flight Number</label>
@@ -447,7 +451,7 @@ export default function AdminDashboardPage() {
                     placeholder="e.g. TG-101"
                     value={flightForm.flight_number}
                     onChange={(e) => setFlightForm({ ...flightForm, flight_number: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div>
@@ -458,7 +462,7 @@ export default function AdminDashboardPage() {
                     placeholder="e.g. Skyline Airways"
                     value={flightForm.airline}
                     onChange={(e) => setFlightForm({ ...flightForm, airline: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div>
@@ -469,7 +473,7 @@ export default function AdminDashboardPage() {
                     placeholder="e.g. JFK"
                     value={flightForm.origin}
                     onChange={(e) => setFlightForm({ ...flightForm, origin: e.target.value.toUpperCase() })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div>
@@ -480,7 +484,7 @@ export default function AdminDashboardPage() {
                     placeholder="e.g. LHR"
                     value={flightForm.destination}
                     onChange={(e) => setFlightForm({ ...flightForm, destination: e.target.value.toUpperCase() })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div>
@@ -490,7 +494,7 @@ export default function AdminDashboardPage() {
                     required
                     value={flightForm.departs_at}
                     onChange={(e) => setFlightForm({ ...flightForm, departs_at: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div>
@@ -500,7 +504,7 @@ export default function AdminDashboardPage() {
                     required
                     value={flightForm.arrives_at}
                     onChange={(e) => setFlightForm({ ...flightForm, arrives_at: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div>
@@ -512,7 +516,7 @@ export default function AdminDashboardPage() {
                     placeholder="299.00"
                     value={flightForm.price}
                     onChange={(e) => setFlightForm({ ...flightForm, price: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div>
@@ -522,7 +526,7 @@ export default function AdminDashboardPage() {
                     required
                     value={flightForm.seats_total}
                     onChange={(e) => setFlightForm({ ...flightForm, seats_total: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
@@ -539,12 +543,12 @@ export default function AdminDashboardPage() {
 
           {/* Flights Table */}
           {flightsLoading ? (
-            <div>Loading flights...</div>
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading flights...</div>
           ) : (
-            <div style={{ overflowX: 'auto', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+            <div style={{ overflowX: 'auto', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                 <thead>
-                  <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                  <tr style={{ background: 'var(--surface-sand)', borderBottom: '1.5px solid var(--border)', color: 'var(--secondary)' }}>
                     <th style={{ padding: '0.75rem 1rem' }}>Flight #</th>
                     <th style={{ padding: '0.75rem 1rem' }}>Airline</th>
                     <th style={{ padding: '0.75rem 1rem' }}>Route</th>
@@ -556,12 +560,12 @@ export default function AdminDashboardPage() {
                 </thead>
                 <tbody>
                   {flights.map((f) => (
-                    <tr key={f.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <tr key={f.id} style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>{f.flight_number}</td>
                       <td style={{ padding: '0.75rem 1rem' }}>{f.airline}</td>
                       <td style={{ padding: '0.75rem 1rem' }}>{f.origin} → {f.destination}</td>
                       <td style={{ padding: '0.75rem 1rem' }}>{new Date(f.departs_at).toLocaleString()}</td>
-                      <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: '#16a34a' }}>${parseFloat(f.price).toFixed(2)}</td>
+                      <td style={{ padding: '0.75rem 1rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--primary)' }}>${parseFloat(f.price).toFixed(2)}</td>
                       <td style={{ padding: '0.75rem 1rem' }}>{f.seats_available ?? f.seats_total} / {f.seats_total}</td>
                       <td style={{ padding: '0.75rem 1rem' }}>
                         <button
@@ -576,7 +580,7 @@ export default function AdminDashboardPage() {
                   ))}
                   {flights.length === 0 && (
                     <tr>
-                      <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+                      <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                         No flights found.
                       </td>
                     </tr>
@@ -604,8 +608,8 @@ export default function AdminDashboardPage() {
 
           {/* Add Hotel Modal */}
           {showHotelModal && (
-            <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', padding: '1.5rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-              <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 700 }}>New Hotel Details</h3>
+            <div style={{ background: 'var(--surface-sand)', border: '1.5px solid var(--border)', padding: '1.5rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', boxShadow: 'var(--shadow-sm)' }}>
+              <h3 style={{ marginBottom: '1rem', fontSize: '1.15rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--secondary)' }}>New Hotel Details</h3>
               <form onSubmit={handleCreateHotel} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>Hotel Name</label>
@@ -615,7 +619,7 @@ export default function AdminDashboardPage() {
                     placeholder="Grand Palace"
                     value={hotelForm.name}
                     onChange={(e) => setHotelForm({ ...hotelForm, name: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div>
@@ -626,7 +630,7 @@ export default function AdminDashboardPage() {
                     placeholder="e.g. Paris"
                     value={hotelForm.city}
                     onChange={(e) => setHotelForm({ ...hotelForm, city: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div>
@@ -636,7 +640,7 @@ export default function AdminDashboardPage() {
                     placeholder="123 Avenue des Champs-Elysees"
                     value={hotelForm.address}
                     onChange={(e) => setHotelForm({ ...hotelForm, address: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div>
@@ -648,7 +652,7 @@ export default function AdminDashboardPage() {
                     max="5"
                     value={hotelForm.rating}
                     onChange={(e) => setHotelForm({ ...hotelForm, rating: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
@@ -665,8 +669,8 @@ export default function AdminDashboardPage() {
 
           {/* Add Room to Hotel Modal */}
           {selectedHotelForRoom && (
-            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '1.5rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-              <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 700, color: '#1e40af' }}>
+            <div style={{ background: 'var(--surface-sand)', border: '1.5px solid var(--border)', padding: '1.5rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem', boxShadow: 'var(--shadow-sm)' }}>
+              <h3 style={{ marginBottom: '1rem', fontSize: '1.15rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--secondary)' }}>
                 Add Room to: {selectedHotelForRoom.name}
               </h3>
               <form onSubmit={handleCreateRoom} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
@@ -678,7 +682,7 @@ export default function AdminDashboardPage() {
                     placeholder="e.g. Suite Executive"
                     value={roomForm.type}
                     onChange={(e) => setRoomForm({ ...roomForm, type: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div>
@@ -689,7 +693,7 @@ export default function AdminDashboardPage() {
                     required
                     value={roomForm.price_per_night}
                     onChange={(e) => setRoomForm({ ...roomForm, price_per_night: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div>
@@ -699,7 +703,7 @@ export default function AdminDashboardPage() {
                     required
                     value={roomForm.rooms_total}
                     onChange={(e) => setRoomForm({ ...roomForm, rooms_total: e.target.value })}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}
                   />
                 </div>
                 <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
@@ -716,12 +720,12 @@ export default function AdminDashboardPage() {
 
           {/* Hotels Table */}
           {hotelsLoading ? (
-            <div>Loading hotels...</div>
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading hotels...</div>
           ) : (
-            <div style={{ overflowX: 'auto', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+            <div style={{ overflowX: 'auto', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                 <thead>
-                  <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                  <tr style={{ background: 'var(--surface-sand)', borderBottom: '1.5px solid var(--border)', color: 'var(--secondary)' }}>
                     <th style={{ padding: '0.75rem 1rem' }}>Hotel Name</th>
                     <th style={{ padding: '0.75rem 1rem' }}>City</th>
                     <th style={{ padding: '0.75rem 1rem' }}>Rating</th>
@@ -732,11 +736,11 @@ export default function AdminDashboardPage() {
                 </thead>
                 <tbody>
                   {hotels.map((h) => (
-                    <tr key={h.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <tr key={h.id} style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={{ padding: '0.75rem 1rem', fontWeight: 600 }}>{h.name}</td>
                       <td style={{ padding: '0.75rem 1rem' }}>{h.city}</td>
-                      <td style={{ padding: '0.75rem 1rem' }}>★ {h.rating}</td>
-                      <td style={{ padding: '0.75rem 1rem', fontWeight: 600, color: '#16a34a' }}>
+                      <td style={{ padding: '0.75rem 1rem', color: '#f59e0b', fontWeight: 600 }}>★ {h.rating}</td>
+                      <td style={{ padding: '0.75rem 1rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--primary)' }}>
                         {h.starting_price ? `$${parseFloat(h.starting_price).toFixed(2)}` : 'N/A'}
                       </td>
                       <td style={{ padding: '0.75rem 1rem' }}>{h.room_types_count || 0} types</td>
@@ -760,7 +764,7 @@ export default function AdminDashboardPage() {
                   ))}
                   {hotels.length === 0 && (
                     <tr>
-                      <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+                      <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                         No hotels found.
                       </td>
                     </tr>
@@ -782,7 +786,7 @@ export default function AdminDashboardPage() {
               <select
                 value={bookingStatusFilter}
                 onChange={(e) => setBookingStatusFilter(e.target.value)}
-                style={{ padding: '0.4rem 0.75rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                style={{ padding: '0.4rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border)' }}
               >
                 <option value="">All Statuses</option>
                 <option value="PENDING">PENDING</option>
@@ -793,12 +797,12 @@ export default function AdminDashboardPage() {
           </div>
 
           {bookingsLoading ? (
-            <div>Loading bookings...</div>
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Loading bookings...</div>
           ) : (
-            <div style={{ overflowX: 'auto', background: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+            <div style={{ overflowX: 'auto', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                 <thead>
-                  <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                  <tr style={{ background: 'var(--surface-sand)', borderBottom: '1.5px solid var(--border)', color: 'var(--secondary)' }}>
                     <th style={{ padding: '0.75rem 1rem' }}>Booking ID</th>
                     <th style={{ padding: '0.75rem 1rem' }}>User ID</th>
                     <th style={{ padding: '0.75rem 1rem' }}>Date</th>
@@ -809,11 +813,11 @@ export default function AdminDashboardPage() {
                 </thead>
                 <tbody>
                   {bookings.map((b) => (
-                    <tr key={b.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <tr key={b.id} style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', fontSize: '0.85rem' }}>
                         {b.id.substring(0, 8)}...
                       </td>
-                      <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', fontSize: '0.85rem', color: '#6b7280' }}>
+                      <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                         {b.user_id.substring(0, 8)}...
                       </td>
                       <td style={{ padding: '0.75rem 1rem' }}>{new Date(b.created_at).toLocaleDateString()}</td>
@@ -824,7 +828,7 @@ export default function AdminDashboardPage() {
                           </div>
                         ))}
                       </td>
-                      <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: '#16a34a' }}>
+                      <td style={{ padding: '0.75rem 1rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--primary)' }}>
                         ${parseFloat(b.total_amount).toFixed(2)}
                       </td>
                       <td style={{ padding: '0.75rem 1rem' }}>
@@ -834,7 +838,7 @@ export default function AdminDashboardPage() {
                   ))}
                   {bookings.length === 0 && (
                     <tr>
-                      <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: '#6b7280' }}>
+                      <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                         No bookings found matching criteria.
                       </td>
                     </tr>

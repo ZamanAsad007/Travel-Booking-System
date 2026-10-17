@@ -181,72 +181,86 @@ export default function FlightDetailPage() {
           </div>
         </div>
 
-        {/* Flight Route Visual */}
+        {/* Boarding-Pass Style Route Visual */}
         <div
           style={{
-            background: 'var(--primary-light)',
-            padding: '1.5rem',
-            borderRadius: 'var(--radius-md)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            background: 'var(--surface)',
+            border: '1.5px solid var(--border)',
+            padding: '1.75rem',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-sm)',
             marginBottom: '1.5rem',
           }}
         >
-          <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
-              {flight.origin}
-            </div>
-            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Departure</div>
-            <div style={{ fontWeight: 600, marginTop: '0.25rem' }}>
-              {new Date(flight.departs_at).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              {new Date(flight.departs_at).toLocaleDateString([], {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.25rem',
-            }}
-          >
-            <Plane size={24} style={{ color: 'var(--primary)' }} />
-            <div
-              style={{ width: '120px', height: '2px', background: 'var(--primary)', opacity: 0.5 }}
-            />
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-              Direct Flight
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem' }}>
+            <span className="stamp-badge stamp-badge-teal">
+              <ShieldCheck size={12} /> Flight Details
             </span>
+            <span className="bp-class-pill">Economy Class</span>
           </div>
 
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>
-              {flight.destination}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontFamily: 'var(--font-heading)', fontSize: '2.5rem', fontWeight: 800, color: 'var(--secondary)', lineHeight: 1 }}>
+                {flight.origin}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '0.25rem' }}>Departure Airport</div>
+              <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.35rem' }}>
+                {new Date(flight.departs_at).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                {new Date(flight.departs_at).toLocaleDateString([], {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </div>
             </div>
-            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Arrival</div>
-            <div style={{ fontWeight: 600, marginTop: '0.25rem' }}>
-              {new Date(flight.arrives_at).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
+
+            <div
+              style={{
+                flex: 1,
+                minWidth: '160px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                padding: '0 1rem',
+              }}
+            >
+              <span className="bp-flight-pill">
+                <Plane size={12} /> {flight.flight_number || 'TG-Flight'}
+              </span>
+              <div className="bp-dotted-line">
+                <Plane size={14} className="bp-path-plane" />
+              </div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem', fontWeight: 600 }}>
+                {flight.duration_minutes
+                  ? `${Math.floor(flight.duration_minutes / 60)}h ${flight.duration_minutes % 60}m Non-stop`
+                  : 'Direct Flight'}
+              </span>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              {new Date(flight.arrives_at).toLocaleDateString([], {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
+
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontFamily: 'var(--font-heading)', fontSize: '2.5rem', fontWeight: 800, color: 'var(--secondary)', lineHeight: 1 }}>
+                {flight.destination}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '0.25rem' }}>Arrival Airport</div>
+              <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.35rem' }}>
+                {new Date(flight.arrives_at).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                {new Date(flight.arrives_at).toLocaleDateString([], {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </div>
             </div>
           </div>
         </div>

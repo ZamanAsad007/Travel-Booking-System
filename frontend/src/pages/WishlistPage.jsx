@@ -90,33 +90,21 @@ export default function WishlistPage() {
             return (
               <div
                 key={item.id}
+                className="card card-hover"
                 style={{
-                  background: '#fff',
-                  borderRadius: '12px',
-                  border: '1px solid #e5e7eb',
-                  padding: '1.25rem',
+                  background: 'var(--surface)',
+                  borderRadius: 'var(--radius-lg)',
+                  border: '1.5px solid var(--border)',
+                  padding: '1.5rem',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        padding: '0.2rem 0.6rem',
-                        borderRadius: '999px',
-                        background: isFlight ? '#eff6ff' : '#f0fdf4',
-                        color: isFlight ? '#1d4ed8' : '#15803d',
-                      }}
-                    >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <span className={`stamp-badge ${isFlight ? 'stamp-badge-teal' : 'stamp-badge-navy'}`}>
                       {isFlight ? <Plane size={12} /> : <Hotel size={12} />}
                       {item.item_type}
                     </span>
@@ -126,11 +114,14 @@ export default function WishlistPage() {
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: '#9ca3af',
+                        color: 'var(--text-muted)',
                         cursor: 'pointer',
                         padding: '0.25rem',
                         borderRadius: '6px',
+                        transition: 'color 0.2s',
                       }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--danger)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
                       title="Remove from wishlist"
                     >
                       <Trash2 size={16} />
@@ -141,46 +132,50 @@ export default function WishlistPage() {
                     <div>
                       {isFlight ? (
                         <>
-                          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.25rem' }}>
-                            {detail.airline} ({detail.flight_number})
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.35rem', color: 'var(--secondary)' }}>
+                            {detail.airline} [{detail.flight_number || 'FL'}]
                           </h3>
-                          <div style={{ color: '#4b5563', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                            {detail.origin} &rarr; {detail.destination}
+                          <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <strong style={{ color: 'var(--text-main)' }}>{detail.origin}</strong>
+                            <span>&rarr;</span>
+                            <strong style={{ color: 'var(--text-main)' }}>{detail.destination}</strong>
                           </div>
-                          <div style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--primary-color)' }}>
+                          <div style={{ fontWeight: 800, fontSize: '1.4rem', color: 'var(--primary)', fontFamily: 'var(--font-heading)' }}>
                             ${parseFloat(detail.price).toFixed(2)}
                           </div>
                         </>
                       ) : (
                         <>
-                          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '0.35rem', color: 'var(--secondary)' }}>
                             {detail.name}
                           </h3>
-                          <div style={{ color: '#4b5563', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-                            {detail.city} • Rating: {detail.rating || 4.5} ★
+                          <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+                            {detail.city} &bull; Rating: {detail.rating || 4.8} ★
                           </div>
                           {detail.starting_price && (
-                            <div style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--primary-color)' }}>
-                              From ${parseFloat(detail.starting_price).toFixed(2)} / night
+                            <div style={{ fontWeight: 800, fontSize: '1.4rem', color: 'var(--primary)', fontFamily: 'var(--font-heading)' }}>
+                              From ${parseFloat(detail.starting_price).toFixed(2)}{' '}
+                              <span style={{ fontSize: '0.8rem', fontWeight: 400, color: 'var(--text-muted)' }}>/ night</span>
                             </div>
                           )}
                         </>
                       )}
                     </div>
                   ) : (
-                    <div style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                       Item ID: {item.item_id}
                     </div>
                   )}
                 </div>
 
-                <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #f3f4f6' }}>
+                <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
                   <Link
                     to={isFlight ? `/flights/${item.item_id}` : `/hotels/${item.item_id}`}
-                    className="btn btn-primary"
-                    style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.4rem', fontSize: '0.875rem' }}
+                    className="btn btn-accent"
+                    style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem', padding: '0.55rem' }}
                   >
-                    View Details <ArrowRight size={15} />
+                    <span>View & Book</span>
+                    <ArrowRight size={15} />
                   </Link>
                 </div>
               </div>

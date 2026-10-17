@@ -42,48 +42,53 @@ export default function LoyaltyPage() {
   };
 
   return (
-    <div className="container" style={{ padding: '2rem 1rem', maxWidth: '900px', margin: '0 auto' }}>
+    <div className="container" style={{ padding: '2rem 1.5rem 4rem', maxWidth: '960px', margin: '0 auto' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-        <div style={{ background: '#fef3c7', padding: '0.75rem', borderRadius: '12px', color: '#b45309' }}>
-          <Award size={28} />
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+          <span className="stamp-badge stamp-badge-amber">
+            <Award size={12} /> TravelGo Rewards
+          </span>
         </div>
-        <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, margin: 0 }}>Loyalty Rewards Program</h1>
-          <p style={{ color: '#6b7280', margin: '0.25rem 0 0 0' }}>
-            Earn points on every trip and unlock exclusive travel privileges
-          </p>
-        </div>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, margin: '0.25rem 0', color: 'var(--secondary)' }}>
+          Loyalty Rewards Program
+        </h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+          Earn points on every flight and hotel booking, unlock VIP tiers, and redeem instant cash savings
+        </p>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '4rem 1rem', color: '#6b7280' }}>
+        <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--text-muted)' }}>
           Loading your loyalty status...
         </div>
       ) : error ? (
         <div
+          className="card"
           style={{
             padding: '2rem',
             textAlign: 'center',
-            background: '#fee2e2',
-            color: '#b91c1c',
-            borderRadius: '12px',
+            background: 'var(--danger-bg)',
+            color: 'var(--danger)',
+            borderColor: '#fca5a5',
           }}
         >
           {error}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           {/* Main Loyalty Card */}
           <LoyaltyCard account={profile?.account} tierInfo={profile?.tierInfo} />
 
           {/* Points Ledger / Transaction History */}
           <div
+            className="card"
             style={{
-              background: '#fff',
-              borderRadius: '16px',
-              border: '1px solid #e5e7eb',
-              padding: '1.5rem',
+              background: 'var(--surface)',
+              borderRadius: 'var(--radius-lg)',
+              border: '1.5px solid var(--border)',
+              padding: '1.75rem',
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
             <div
@@ -92,22 +97,26 @@ export default function LoyaltyPage() {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 marginBottom: '1.25rem',
+                borderBottom: '1px solid var(--border)',
+                paddingBottom: '0.85rem',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <History size={20} color="#2563eb" />
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>Points Activity Ledger</h3>
+                <History size={20} color="var(--primary)" />
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--secondary)' }}>
+                  Points Activity Ledger
+                </h3>
               </div>
-              <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+              <span className="stamp-badge stamp-badge-navy" style={{ fontSize: '0.72rem' }}>
                 {profile?.ledger?.length || 0} transaction{profile?.ledger?.length === 1 ? '' : 's'}
               </span>
             </div>
 
             {(!profile?.ledger || profile.ledger.length === 0) ? (
-              <div style={{ textAlign: 'center', padding: '2.5rem', color: '#6b7280' }}>
-                <Gift size={36} style={{ color: '#d1d5db', margin: '0 auto 0.75rem auto' }} />
-                <p style={{ margin: 0, fontWeight: 500 }}>No points activity recorded yet.</p>
-                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: '#9ca3af' }}>
+              <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+                <Gift size={40} style={{ color: 'var(--border)', margin: '0 auto 0.75rem auto' }} />
+                <p style={{ margin: 0, fontWeight: 700, color: 'var(--secondary)' }}>No points activity recorded yet.</p>
+                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                   Book your next flight or hotel to start earning points!
                 </p>
               </div>
