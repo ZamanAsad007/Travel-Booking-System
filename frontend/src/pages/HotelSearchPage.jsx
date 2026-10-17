@@ -357,6 +357,7 @@ export default function HotelSearchPage() {
                         alt={hotel.name}
                         className="hotel-img-main"
                         loading="lazy"
+                        decoding="async"
                       />
 
                       <div className="hotel-img-badges">

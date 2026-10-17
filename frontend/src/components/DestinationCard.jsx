@@ -45,6 +45,7 @@ export default function DestinationCard({
           alt={`${city}, ${country}`}
           className="destination-image"
           loading="lazy"
+          decoding="async"
         />
         <div className="destination-gradient-overlay" />
         {tag && (

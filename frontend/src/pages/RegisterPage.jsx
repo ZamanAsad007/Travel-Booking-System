@@ -36,6 +36,8 @@ export default function RegisterPage() {
           src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80"
           alt="Scenic travel landscape"
           className="auth-hero-bg"
+          decoding="async"
+          loading="eager"
         />
         <div className="auth-hero-overlay">
           <div>

@@ -621,6 +621,7 @@ export default function BookingDetailPage() {
                   alt={hotel.name}
                   className="suggestion-hotel-img"
                   loading="lazy"
+                  decoding="async"
                 />
                 <div className="suggestion-hotel-content">
                   <div>

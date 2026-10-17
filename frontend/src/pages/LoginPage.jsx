@@ -40,6 +40,8 @@ export default function LoginPage() {
           src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80"
           alt="Tropical paradise"
           className="auth-hero-bg"
+          decoding="async"
+          loading="eager"
         />
         <div className="auth-hero-overlay">
           <div>
