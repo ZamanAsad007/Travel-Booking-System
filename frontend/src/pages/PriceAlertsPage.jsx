@@ -67,7 +67,7 @@ export default function PriceAlertsPage() {
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {alerts.map((alert) => {
             const isTriggered = alert.status === 'TRIGGERED';
             const isFlight = alert.item_type?.toLowerCase() === 'flight';
@@ -75,64 +75,43 @@ export default function PriceAlertsPage() {
             return (
               <div
                 key={alert.id}
+                className="card card-hover"
                 style={{
-                  background: '#fff',
-                  borderRadius: '12px',
-                  border: `1px solid ${isTriggered ? '#a7f3d0' : '#e5e7eb'}`,
-                  padding: '1.25rem',
+                  background: 'var(--surface)',
+                  borderRadius: 'var(--radius-lg)',
+                  border: `1.5px solid ${isTriggered ? '#86EFAC' : 'var(--border)'}`,
+                  padding: '1.5rem',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   flexWrap: 'wrap',
                   gap: '1rem',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        padding: '0.2rem 0.5rem',
-                        borderRadius: '999px',
-                        background: isFlight ? '#eff6ff' : '#f0fdf4',
-                        color: isFlight ? '#1d4ed8' : '#15803d',
-                      }}
-                    >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem' }}>
+                    <span className={`stamp-badge ${isFlight ? 'stamp-badge-teal' : 'stamp-badge-navy'}`}>
                       {isFlight ? <Plane size={12} /> : <Hotel size={12} />}
                       {alert.item_type}
                     </span>
 
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.3rem',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        padding: '0.2rem 0.6rem',
-                        borderRadius: '999px',
-                        background: isTriggered ? '#ecfdf5' : '#fef3c7',
-                        color: isTriggered ? '#065f46' : '#92400e',
-                      }}
-                    >
-                      {isTriggered ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
+                    <span className={`stamp-badge ${isTriggered ? 'stamp-badge-teal' : 'stamp-badge-amber'}`}>
+                      {isTriggered ? <CheckCircle2 size={12} /> : <AlertTriangle size={12} />}
                       {isTriggered ? 'TRIGGERED (Discount reached!)' : 'ACTIVE (Watching)'}
                     </span>
                   </div>
 
-                  <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '0 0 0.25rem 0' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0.15rem 0 0.35rem 0', color: 'var(--secondary)' }}>
                     {alert.item_name || `${alert.item_type} #${alert.item_id}`}
                   </h3>
 
-                  <div style={{ fontSize: '0.9rem', color: '#4b5563' }}>
-                    Target Price: <strong style={{ color: '#059669', fontSize: '1.05rem' }}>${parseFloat(alert.target_price).toFixed(2)}</strong>
-                    <span style={{ color: '#9ca3af', marginLeft: '0.75rem' }}>
+                  <div style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+                    Target Price:{' '}
+                    <strong style={{ color: 'var(--primary)', fontSize: '1.15rem', fontFamily: 'var(--font-heading)' }}>
+                      ${parseFloat(alert.target_price).toFixed(2)}
+                    </strong>
+                    <span style={{ color: 'var(--text-muted)', marginLeft: '0.75rem' }}>
                       Created: {new Date(alert.created_at).toLocaleDateString()}
                     </span>
                   </div>
@@ -142,18 +121,18 @@ export default function PriceAlertsPage() {
                   <Link
                     to={isFlight ? `/flights/${alert.item_id}` : `/hotels/${alert.item_id}`}
                     className="btn btn-secondary"
-                    style={{ fontSize: '0.85rem', padding: '0.5rem 0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                    style={{ fontSize: '0.85rem', padding: '0.5rem 0.95rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
                   >
-                    View Item <ArrowRight size={14} />
+                    <span>View Item</span>
+                    <ArrowRight size={14} />
                   </Link>
 
                   <button
                     onClick={() => handleDelete(alert.id)}
                     className="btn btn-secondary"
                     style={{
-                      color: '#ef4444',
-                      borderColor: '#fee2e2',
-                      background: '#fff',
+                      color: 'var(--danger)',
+                      borderColor: 'var(--border)',
                       padding: '0.5rem 0.75rem',
                     }}
                     title="Delete price alert"
