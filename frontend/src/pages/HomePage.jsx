@@ -19,7 +19,7 @@ import {
   CheckCircle2,
   TrendingUp,
 } from 'lucide-react';
-import AutocompleteInput from '../components/AutocompleteInput.jsx';
+import LocationSelect from '../components/LocationSelect.jsx';
 import DestinationCard from '../components/DestinationCard.jsx';
 import Skeleton from '../components/Skeleton.jsx';
 import { catalogApi } from '../api/catalog.js';
@@ -203,14 +203,13 @@ export default function HomePage() {
         {tab === 'flights' && (
           <form onSubmit={handleFlightSubmit}>
             <div className="search-route-grid">
-              <AutocompleteInput
+              <LocationSelect
                 label="From (Origin)"
-                placeholder="e.g. JFK or New York"
+                placeholder="All Origins"
                 value={origin}
                 onChange={setOrigin}
-                onSelect={(val) => setOrigin(val)}
                 icon={Plane}
-                filterType="airport"
+                type="airport"
               />
 
               <button
@@ -223,14 +222,13 @@ export default function HomePage() {
                 <ArrowLeftRight size={16} />
               </button>
 
-              <AutocompleteInput
+              <LocationSelect
                 label="To (Destination)"
-                placeholder="e.g. LHR or London"
+                placeholder="All Destinations"
                 value={destination}
                 onChange={setDestination}
-                onSelect={(val) => setDestination(val)}
                 icon={MapPin}
-                filterType="airport"
+                type="airport"
               />
 
               <div className="form-group" style={{ marginBottom: 0 }}>
@@ -257,14 +255,13 @@ export default function HomePage() {
 
         {tab === 'hotels' && (
           <form onSubmit={handleHotelSubmit} className="grid-4" style={{ alignItems: 'flex-end' }}>
-            <AutocompleteInput
+            <LocationSelect
               label="City or Destination"
-              placeholder="e.g. London, Paris, Tokyo"
+              placeholder="All Cities / Destinations"
               value={city}
               onChange={setCity}
-              onSelect={(val) => setCity(val)}
               icon={Hotel}
-              filterType="city"
+              type="city"
             />
 
             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -300,23 +297,22 @@ export default function HomePage() {
 
         {tab === 'bundles' && (
           <form onSubmit={handleBundleSubmit} className="grid-4" style={{ alignItems: 'flex-end' }}>
-            <AutocompleteInput
+            <LocationSelect
               label="Departure City"
-              placeholder="e.g. JFK or New York"
+              placeholder="All Origins"
               value={bundleFrom}
               onChange={setBundleFrom}
-              onSelect={(val) => setBundleFrom(val)}
               icon={Plane}
-              filterType="airport"
+              type="airport"
             />
 
-            <AutocompleteInput
+            <LocationSelect
               label="Destination City"
-              placeholder="e.g. London, Tokyo, Paris"
+              placeholder="All Destinations"
               value={bundleTo}
               onChange={setBundleTo}
-              onSelect={(val) => setBundleTo(val)}
               icon={MapPin}
+              type="airport"
             />
 
             <div className="form-group" style={{ marginBottom: 0 }}>

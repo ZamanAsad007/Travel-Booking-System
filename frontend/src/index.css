@@ -183,21 +183,25 @@ a {
   position: sticky;
   top: 0;
   z-index: 50;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .navbar.navbar-solid {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
 }
 
-.navbar.navbar-transparent {
-  background: transparent;
-  border-bottom: 1px solid transparent;
-  box-shadow: none;
+.navbar.navbar-scrolled {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--shadow-md);
 }
 
 .nav-container {
@@ -221,10 +225,6 @@ a {
   transition: color 0.2s ease;
 }
 
-.navbar.navbar-transparent .nav-brand {
-  color: #FFFFFF;
-}
-
 .nav-links {
   display: flex;
   align-items: center;
@@ -235,7 +235,7 @@ a {
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.92rem;
-  color: var(--text-muted);
+  color: var(--text-main);
   transition: color 0.2s ease;
   display: flex;
   align-items: center;
@@ -246,33 +246,13 @@ a {
   color: var(--primary);
 }
 
-.navbar.navbar-transparent .nav-link {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.navbar.navbar-transparent .nav-link:hover,
-.navbar.navbar-transparent .nav-link.active {
-  color: #FFFFFF;
-}
-
-.navbar.navbar-transparent .profile-btn {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.35);
-  color: #FFFFFF;
-}
-
-.navbar.navbar-transparent .profile-btn:hover {
-  background: rgba(255, 255, 255, 0.28);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
 /* Mobile Toggle & Drawer */
 .mobile-nav-toggle {
   display: none;
   background: var(--surface);
   border: 1px solid var(--border);
   cursor: pointer;
-  color: var(--text-main);
+  color: var(--secondary);
   padding: 0.45rem;
   border-radius: var(--radius-sm);
   align-items: center;
@@ -280,10 +260,9 @@ a {
   transition: all 0.2s ease;
 }
 
-.navbar.navbar-transparent .mobile-nav-toggle {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.35);
-  color: #FFFFFF;
+.mobile-nav-toggle:hover {
+  background: var(--sand);
+  color: var(--primary);
 }
 
 .drawer-backdrop {
@@ -514,6 +493,17 @@ a {
 
 .form-input::placeholder {
   color: #94A3B8;
+}
+
+.form-select {
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.form-select option {
+  background-color: var(--surface);
+  color: var(--text-main);
+  padding: 0.5rem;
 }
 
 /* Badges */

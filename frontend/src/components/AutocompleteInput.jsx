@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { catalogApi } from '../api/catalog.js';
 import { useDebounce } from '../hooks/useDebounce.js';
-import { MapPin, Plane, Hotel, Building2, Check } from 'lucide-react';
+import { MapPin, Plane, Hotel, Building2, ChevronDown, X } from 'lucide-react';
+import { AIRPORTS, HOTEL_CITIES } from '../constants/locations.js';
 
 export default function AutocompleteInput({
   value,
@@ -19,6 +20,44 @@ export default function AutocompleteInput({
   const containerRef = useRef(null);
   const debouncedQuery = useDebounce(query, 250);
 
+  // Fallback / default suggestions from locations.js
+  const getDefaultSuggestions = () => {
+    if (filterType === 'airport') {
+      return AIRPORTS.map((a) => ({
+        type: 'airport',
+        code: a.code,
+        name: a.name,
+        text: a.name,
+        city: a.name.split(' (')[0],
+      }));
+    }
+    if (filterType === 'city') {
+      return HOTEL_CITIES.map((c) => ({
+        type: 'city',
+        code: c.value,
+        name: c.value,
+        text: c.label,
+        city: c.value,
+      }));
+    }
+    return [
+      ...AIRPORTS.map((a) => ({
+        type: 'airport',
+        code: a.code,
+        name: a.name,
+        text: a.name,
+        city: a.name.split(' (')[0],
+      })),
+      ...HOTEL_CITIES.map((c) => ({
+        type: 'city',
+        code: c.value,
+        name: c.value,
+        text: c.label,
+        city: c.value,
+      })),
+    ];
+  };
+
   useEffect(() => {
     setQuery(value || '');
   }, [value]);
@@ -26,7 +65,7 @@ export default function AutocompleteInput({
   useEffect(() => {
     let active = true;
     if (!debouncedQuery || debouncedQuery.trim().length < 1) {
-      setSuggestions([]);
+      setSuggestions(getDefaultSuggestions());
       return;
     }
 
@@ -39,10 +78,30 @@ export default function AutocompleteInput({
         if (filterType) {
           list = list.filter((s) => s.type === filterType || (filterType === 'city' && s.type === 'hotel'));
         }
+        if (list.length === 0) {
+          const q = debouncedQuery.toLowerCase().trim();
+          list = getDefaultSuggestions().filter(
+            (item) =>
+              (item.name && item.name.toLowerCase().includes(q)) ||
+              (item.code && item.code.toLowerCase().includes(q)) ||
+              (item.text && item.text.toLowerCase().includes(q)) ||
+              (item.city && item.city.toLowerCase().includes(q))
+          );
+        }
         setSuggestions(list);
       })
       .catch(() => {
-        if (active) setSuggestions([]);
+        if (active) {
+          const q = debouncedQuery.toLowerCase().trim();
+          setSuggestions(
+            getDefaultSuggestions().filter(
+              (item) =>
+                (item.name && item.name.toLowerCase().includes(q)) ||
+                (item.code && item.code.toLowerCase().includes(q)) ||
+                (item.text && item.text.toLowerCase().includes(q))
+            )
+          );
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -77,6 +136,14 @@ export default function AutocompleteInput({
     setOpen(false);
   };
 
+  const handleClear = (e) => {
+    e.stopPropagation();
+    setQuery('');
+    onChange('');
+    onSelect('', null);
+    setSuggestions(getDefaultSuggestions());
+  };
+
   const getItemIcon = (type) => {
     switch (type) {
       case 'airport':
@@ -101,8 +168,13 @@ export default function AutocompleteInput({
           placeholder={placeholder}
           value={query}
           onChange={handleInputChange}
-          onFocus={() => setOpen(true)}
-          style={{ paddingLeft: '2.2rem' }}
+          onFocus={() => {
+            if (suggestions.length === 0) {
+              setSuggestions(getDefaultSuggestions());
+            }
+            setOpen(true);
+          }}
+          style={{ paddingLeft: '2.2rem', paddingRight: '3.6rem' }}
         />
         <div
           style={{
@@ -110,12 +182,75 @@ export default function AutocompleteInput({
             left: '0.75rem',
             top: '50%',
             transform: 'translateY(-50%)',
-            color: 'var(--text-muted)',
+            color: 'var(--primary)',
             display: 'flex',
             alignItems: 'center',
+            pointerEvents: 'none',
           }}
         >
           <Icon size={16} />
+        </div>
+
+        <div
+          style={{
+            position: 'absolute',
+            right: '0.65rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem',
+          }}
+        >
+          {query && (
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={handleClear}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                padding: '2px',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              title="Clear input"
+              aria-label="Clear input"
+            >
+              <X size={14} />
+            </button>
+          )}
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => {
+              if (!open && suggestions.length === 0) {
+                setSuggestions(getDefaultSuggestions());
+              }
+              setOpen((prev) => !prev);
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              padding: '2px',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            title="Toggle options"
+            aria-label="Toggle options"
+          >
+            <ChevronDown
+              size={15}
+              style={{
+                transition: 'transform 0.2s',
+                transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+              }}
+            />
+          </button>
         </div>
       </div>
 

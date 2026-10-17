@@ -14,7 +14,7 @@ import {
   RotateCcw,
   ShieldCheck,
 } from 'lucide-react';
-import AutocompleteInput from '../components/AutocompleteInput.jsx';
+import LocationSelect from '../components/LocationSelect.jsx';
 import { engagementApi } from '../api/engagement.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -160,14 +160,13 @@ export default function HotelSearchPage() {
       {/* Top Search Bar */}
       <div className="card" style={{ marginBottom: '2rem' }}>
         <form onSubmit={handleSearchSubmit} className="grid-4" style={{ alignItems: 'flex-end' }}>
-          <AutocompleteInput
+          <LocationSelect
             label="City or Destination"
-            placeholder="e.g. London or Paris"
+            placeholder="All Cities / Destinations"
             value={city}
             onChange={setCity}
-            onSelect={(val) => setCity(val)}
             icon={Hotel}
-            filterType="city"
+            type="city"
           />
 
           <div className="form-group" style={{ marginBottom: 0 }}>

@@ -102,11 +102,9 @@ export default function Navbar() {
     .toUpperCase()
     .slice(0, 2);
 
-  const isTransparent = isHomePage && !scrolled;
-
   return (
     <>
-      <nav className={`navbar ${isTransparent ? 'navbar-transparent' : 'navbar-solid'}`}>
+      <nav className={`navbar navbar-solid ${scrolled ? 'navbar-scrolled' : ''}`}>
         <div className="nav-container">
           {/* Brand Logo */}
           <Link to="/" className="nav-brand">
@@ -115,12 +113,12 @@ export default function Navbar() {
                 width: '36px',
                 height: '36px',
                 borderRadius: '10px',
-                background: isTransparent ? 'rgba(255, 255, 255, 0.2)' : 'var(--primary-light)',
+                background: 'var(--primary-light)',
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: isTransparent ? '#FFFFFF' : 'var(--primary)',
-                border: isTransparent ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid var(--border)',
+                color: 'var(--primary)',
+                border: '1px solid var(--border)',
               }}
             >
               <Plane size={20} style={{ transform: 'rotate(-45deg)' }} />
@@ -156,9 +154,9 @@ export default function Navbar() {
                   padding: '0.1rem 0.4rem',
                   fontSize: '0.65rem',
                   marginLeft: '0.15rem',
-                  backgroundColor: isTransparent ? 'rgba(255, 107, 74, 0.2)' : 'var(--accent-light)',
+                  backgroundColor: 'var(--accent-light)',
                   borderColor: 'var(--accent)',
-                  color: isTransparent ? '#FFE6E0' : 'var(--accent)',
+                  color: 'var(--accent)',
                 }}
               >
                 15% OFF
@@ -311,13 +309,6 @@ export default function Navbar() {
                     style={{
                       padding: '0.45rem 0.9rem',
                       fontSize: '0.88rem',
-                      ...(isTransparent
-                        ? {
-                            backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                            borderColor: 'rgba(255, 255, 255, 0.35)',
-                            color: '#FFFFFF',
-                          }
-                        : {}),
                     }}
                   >
                     <LogIn size={15} />
