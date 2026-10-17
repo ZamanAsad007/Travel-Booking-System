@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { bookingApi } from '../api/bookings.js';
+import { engagementApi } from '../api/engagement.js';
 import {
   ShieldCheck,
   CreditCard,
@@ -15,6 +16,9 @@ import {
   Percent,
   Sparkles,
   X,
+  Award,
+  Luggage,
+  Sliders,
 } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -23,6 +27,7 @@ export default function CheckoutPage() {
   const { user } = useAuth();
 
   const itemState = location.state;
+  const [currentStep, setCurrentStep] = useState(1); // 1: Passengers, 2: Extras, 3: Payment
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -31,6 +36,27 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
   const [validatingCoupon, setValidatingCoupon] = useState(false);
+
+  // Loyalty rewards redemption state
+  const [loyaltyAccount, setLoyaltyAccount] = useState(null);
+  const [redeemPoints, setRedeemPoints] = useState(0);
+
+  // Travel extras state
+  const [extras, setExtras] = useState({
+    insurance: false,
+    priorityBoarding: false,
+  });
+
+  useEffect(() => {
+    engagementApi
+      .getLoyaltyProfile()
+      .then((res) => {
+        if (res.success && res.data?.account) {
+          setLoyaltyAccount(res.data.account);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const [travelers, setTravelers] = useState([
     {
@@ -114,8 +140,25 @@ export default function CheckoutPage() {
   const peakSurcharge = peakSeason ? Math.round(baseTotal * peakSeason.rate * 100) / 100 : 0;
   const grossSubtotal = baseTotal + weekendSurcharge + peakSurcharge;
 
-  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
-  const discountedSubtotal = Math.max(0, grossSubtotal - discountAmount);
+  const insurancePrice = extras.insurance ? 25 * travelerCount : 0;
+  const priorityPrice = extras.priorityBoarding ? 15 * travelerCount : 0;
+  const extrasTotal = insurancePrice + priorityPrice;
+
+  const couponDiscountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+
+  // Loyalty points redemption: 10 points = $1.00
+  const pointsBalance = loyaltyAccount?.points_balance || 0;
+  const maxRedeemablePoints = Math.min(
+    pointsBalance,
+    Math.max(0, Math.floor((grossSubtotal + extrasTotal - couponDiscountAmount) * 10))
+  );
+  const loyaltyDiscount = Math.min(
+    Math.floor(redeemPoints / 10),
+    Math.max(0, grossSubtotal + extrasTotal - couponDiscountAmount)
+  );
+
+  const totalDiscount = couponDiscountAmount + loyaltyDiscount;
+  const discountedSubtotal = Math.max(0, grossSubtotal + extrasTotal - totalDiscount);
   const taxes = Math.round(discountedSubtotal * 0.1 * 100) / 100;
   const totalAmount = (discountedSubtotal + taxes).toFixed(2);
 
@@ -255,7 +298,37 @@ export default function CheckoutPage() {
         Back
       </button>
 
-      <h1 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '1.5rem' }}>
+      {/* Checkout Stepper */}
+      <div className="checkout-stepper">
+        <div
+          className={`stepper-step ${currentStep >= 1 ? (currentStep === 1 ? 'active' : 'done') : ''}`}
+          onClick={() => setCurrentStep(1)}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="stepper-num">1</div>
+          <span>Travelers</span>
+        </div>
+        <div className="stepper-divider" />
+        <div
+          className={`stepper-step ${currentStep >= 2 ? (currentStep === 2 ? 'active' : 'done') : ''}`}
+          onClick={() => setCurrentStep(2)}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="stepper-num">2</div>
+          <span>Extras</span>
+        </div>
+        <div className="stepper-divider" />
+        <div
+          className={`stepper-step ${currentStep >= 3 ? 'active' : ''}`}
+          onClick={() => setCurrentStep(3)}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="stepper-num">3</div>
+          <span>Payment</span>
+        </div>
+      </div>
+
+      <h1 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '1.5rem', color: 'var(--secondary)' }}>
         Review & Complete Your Booking
       </h1>
 
@@ -433,6 +506,76 @@ export default function CheckoutPage() {
               </div>
             ))}
           </div>
+
+          {/* Travel Extras & Add-ons Card */}
+          <div className="card">
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--secondary)' }}>
+              <Luggage size={18} style={{ color: 'var(--primary)' }} />
+              Travel Extras & Add-ons
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.75rem',
+                  padding: '0.85rem',
+                  border: `1.5px solid ${extras.insurance ? 'var(--primary)' : 'var(--border)'}`,
+                  borderRadius: 'var(--radius-sm)',
+                  background: extras.insurance ? 'var(--primary-light)' : '#FAF7F2',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={extras.insurance}
+                  onChange={(e) => setExtras({ ...extras, insurance: e.target.checked })}
+                  style={{ marginTop: '0.2rem' }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong style={{ fontSize: '0.9rem' }}>Comprehensive Travel Insurance</strong>
+                    <span style={{ fontWeight: 700, color: 'var(--secondary)', fontSize: '0.85rem' }}>+$25 / traveler</span>
+                  </div>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
+                    Covers trip cancellations, medical emergencies, and lost baggage with zero deductible.
+                  </p>
+                </div>
+              </label>
+
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.75rem',
+                  padding: '0.85rem',
+                  border: `1.5px solid ${extras.priorityBoarding ? 'var(--primary)' : 'var(--border)'}`,
+                  borderRadius: 'var(--radius-sm)',
+                  background: extras.priorityBoarding ? 'var(--primary-light)' : '#FAF7F2',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={extras.priorityBoarding}
+                  onChange={(e) => setExtras({ ...extras, priorityBoarding: e.target.checked })}
+                  style={{ marginTop: '0.2rem' }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong style={{ fontSize: '0.9rem' }}>Priority Boarding & Fast-Track</strong>
+                    <span style={{ fontWeight: 700, color: 'var(--secondary)', fontSize: '0.85rem' }}>+$15 / traveler</span>
+                  </div>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
+                    Fast-track airport security check and guaranteed overhead bin space on aircraft.
+                  </p>
+                </div>
+              </label>
+            </div>
+          </div>
         </div>
 
         {/* Right Column: Price Summary & Payment Trigger */}
@@ -500,13 +643,54 @@ export default function CheckoutPage() {
                 </button>
               </form>
             )}
-            {couponError && (
-              <div style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <AlertCircle size={13} />
-                {couponError}
-              </div>
-            )}
           </div>
+
+          {/* Loyalty Rewards Redemption Slider */}
+          {loyaltyAccount && (
+            <div style={{ marginBottom: '1.25rem', borderBottom: '1px solid var(--border)', paddingBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Award size={15} style={{ color: 'var(--highlight)' }} />
+                  Redeem TravelGo Points
+                </label>
+                <span className="stamp-badge stamp-badge-amber" style={{ fontSize: '0.7rem' }}>
+                  {pointsBalance} pts
+                </span>
+              </div>
+
+              {pointsBalance > 0 ? (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+                    <span>0 pts ($0)</span>
+                    <span style={{ fontWeight: 700, color: 'var(--primary)' }}>
+                      {redeemPoints} pts (-${loyaltyDiscount.toFixed(2)})
+                    </span>
+                    <span>{maxRedeemablePoints} pts</span>
+                  </div>
+
+                  <input
+                    type="range"
+                    min="0"
+                    max={maxRedeemablePoints}
+                    step="10"
+                    value={redeemPoints}
+                    onChange={(e) => setRedeemPoints(parseInt(e.target.value) || 0)}
+                    style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                  />
+
+                  {redeemPoints > 0 && (
+                    <div style={{ fontSize: '0.78rem', color: '#166534', marginTop: '0.35rem', fontWeight: 600 }}>
+                      ✓ Applied ${loyaltyDiscount.toFixed(2)} rewards discount!
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                  You currently have 0 points. Complete this trip to earn rewards!
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Itemized Price Breakdown */}
           {isBundle ? (
@@ -556,6 +740,20 @@ export default function CheckoutPage() {
             </div>
           )}
 
+          {extrasTotal > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '0.5rem',
+                fontSize: '0.92rem',
+              }}
+            >
+              <span style={{ color: 'var(--text-muted)' }}>Travel Extras & Protection</span>
+              <span>+${extrasTotal.toFixed(2)}</span>
+            </div>
+          )}
+
           {isWeekend && (
             <div
               style={{
@@ -602,7 +800,23 @@ export default function CheckoutPage() {
               }}
             >
               <span>Coupon Discount ({appliedCoupon.coupon.code})</span>
-              <span>-${discountAmount.toFixed(2)}</span>
+              <span>-${couponDiscountAmount.toFixed(2)}</span>
+            </div>
+          )}
+
+          {loyaltyDiscount > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '0.5rem',
+                fontSize: '0.92rem',
+                color: '#166534',
+                fontWeight: 600,
+              }}
+            >
+              <span>Loyalty Points Discount ({redeemPoints} pts)</span>
+              <span>-${loyaltyDiscount.toFixed(2)}</span>
             </div>
           )}
 
@@ -628,8 +842,15 @@ export default function CheckoutPage() {
               alignItems: 'center',
             }}
           >
-            <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>Total</span>
-            <span style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--primary)' }}>
+            <div>
+              <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--secondary)' }}>Total</span>
+              <div style={{ marginTop: '0.15rem' }}>
+                <span className="stamp-badge stamp-badge-amber" style={{ fontSize: '0.68rem' }}>
+                  Earns +{Math.max(1, Math.floor(totalAmount / 10))} pts
+                </span>
+              </div>
+            </div>
+            <span style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--primary)', fontFamily: 'var(--font-heading)' }}>
               ${totalAmount}
             </span>
           </div>
