@@ -3141,4 +3141,62 @@ a {
   }
 }
 
+/* ==========================================================================
+   Phase 8: Accessibility & Focus Styles
+   ========================================================================== */
+
+/* High-contrast focus rings for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+.btn:focus-visible,
+.tab-btn:focus-visible,
+.swap-btn:focus-visible,
+.hotel-card-wishlist:focus-visible,
+.stub-wishlist-btn:focus-visible,
+.mobile-nav-toggle:focus-visible,
+.profile-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.25) !important;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.25) !important;
+}
+
+/* Reduced motion preference (WCAG AA) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .footer-pulse-dot,
+  .pulse-dot-live {
+    animation: none !important;
+  }
+  .skeleton,
+  .skeleton-shimmer {
+    animation: none !important;
+    background: var(--sand-dark) !important;
+  }
+  .hotel-catalog-card:hover,
+  .destination-card:hover,
+  .suggestion-hotel-card:hover,
+  .card-hover:hover {
+    transform: none !important;
+  }
+}
+
 
