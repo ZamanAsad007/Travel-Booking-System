@@ -1,0 +1,134 @@
+
+<section class="relative z-30 w-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin -mt-24 mb-space-xl">
+<div class="bg-surface-container-lowest rounded-[24px] p-space-md md:p-space-lg shadow-[0_24px_50px_-12px_rgba(11,37,69,0.18),0_8px_20px_-4px_rgba(11,37,69,0.06)] backdrop-blur-xl">
+<!-- Search Tabs & Flight Modifiers -->
+<div class="flex flex-wrap items-center justify-between gap-space-md pb-space-md mb-space-md bg-surface-container-low/50 -mx-space-md md:-mx-space-lg -mt-space-md md:-mt-space-lg px-space-md md:px-space-lg pt-space-md rounded-t-[24px]">
+<!-- Booking Module Tabs -->
+<div class="inline-flex items-center bg-surface-container-high/60 p-1 rounded-full gap-1" id="booking-tabs">
+<button class="tab-btn active px-space-md py-1.5 rounded-full font-label-lg text-label-lg bg-primary-container text-on-primary transition-all shadow-sm flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-base">flight_takeoff</span>
+<span>Flights</span>
+</button>
+<button class="tab-btn px-space-md py-1.5 rounded-full font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface transition-all flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-base">hotel</span>
+<span>Hotels</span>
+</button>
+<button class="tab-btn px-space-md py-1.5 rounded-full font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface transition-all flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-base">luggage</span>
+<span>Packages</span>
+</button>
+</div>
+<!-- Trip Options Sub-Row -->
+<div class="flex flex-wrap items-center gap-space-md">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md">
+<label class="flex items-center gap-1.5 cursor-pointer px-2 py-1 rounded hover:bg-surface-container-high transition-colors">
+<input checked="" class="accent-primary w-4 h-4" name="trip_type" type="radio">
+<span>Round trip</span>
+</label>
+<label class="flex items-center gap-1.5 cursor-pointer px-2 py-1 rounded hover:bg-surface-container-high transition-colors">
+<input class="accent-primary w-4 h-4" name="trip_type" type="radio">
+<span>One way</span>
+</label>
+<label class="flex items-center gap-1.5 cursor-pointer px-2 py-1 rounded hover:bg-surface-container-high transition-colors">
+<input class="accent-primary w-4 h-4" name="trip_type" type="radio">
+<span>Multi-city</span>
+</label>
+</div>
+<!-- Class Dropdown -->
+<div class="relative inline-flex items-center">
+<select aria-label="Flight class selection" class="appearance-none bg-surface-container-low text-on-surface font-label-md text-label-md py-1.5 pl-3 pr-8 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary">
+<option>Economy Class</option>
+<option>Premium Economy</option>
+<option>Business Class</option>
+<option>First Class</option>
+</select>
+<span class="material-symbols-outlined pointer-events-none absolute right-2 text-sm text-on-surface-variant">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Main Input Grid -->
+<form class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-space-sm items-center">
+<!-- Origin ("From") -->
+<div class="lg:col-span-3 relative flex flex-col justify-center p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high/60 transition-colors cursor-text group">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">From</span>
+<span class="font-code-flight text-code-flight text-primary group-hover:scale-105 transition-transform">DAC</span>
+</div>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-title-md text-title-md text-on-surface font-bold">Dhaka</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Hazrat Shahjalal Intl</span>
+</div>
+<input type="hidden" value="DAC">
+</div>
+<!-- Swap Icon Floating Button -->
+<div class="hidden lg:flex lg:col-span-1 justify-center -mx-5 z-20">
+<button aria-label="Swap departure and arrival airport" class="w-10 h-10 rounded-full bg-surface-container-lowest shadow-[0_2px_10px_rgba(11,37,69,0.12)] text-primary hover:text-[#FF6B4A] hover:rotate-180 transition-all duration-300 flex items-center justify-center" type="button">
+<span class="material-symbols-outlined text-lg">swap_horiz</span>
+</button>
+</div>
+<!-- Destination ("To") -->
+<div class="lg:col-span-3 relative flex flex-col justify-center p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high/60 transition-colors cursor-text group">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">To</span>
+<span class="font-code-flight text-code-flight text-[#FF6B4A] group-hover:scale-105 transition-transform">DXB</span>
+</div>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-title-md text-title-md text-on-surface font-bold">Dubai</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Dubai International</span>
+</div>
+<input type="hidden" value="DXB">
+</div>
+<!-- Dates (Depart & Return) -->
+<div class="lg:col-span-3 grid grid-cols-2 gap-space-xs">
+<div class="p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high/60 transition-colors cursor-pointer">
+<span class="block font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Depart</span>
+<span class="font-title-md text-title-md text-on-surface block mt-0.5 whitespace-nowrap">Oct 14, 2025</span>
+<span class="font-label-md text-label-md text-secondary block">Tuesday</span>
+</div>
+<div class="p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high/60 transition-colors cursor-pointer">
+<span class="block font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Return</span>
+<span class="font-title-md text-title-md text-on-surface block mt-0.5 whitespace-nowrap">Oct 22, 2025</span>
+<span class="font-label-md text-label-md text-secondary block">Wednesday</span>
+</div>
+</div>
+<!-- Travelers & Primary CTA -->
+<div class="lg:col-span-2 flex flex-col gap-space-xs">
+<div class="p-2 rounded-xl bg-surface-container-low hover:bg-surface-container-high/60 transition-colors cursor-pointer flex items-center justify-between">
+<div>
+<span class="block font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Travelers</span>
+<span class="font-label-lg text-label-lg text-on-surface">2 Adults</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">group</span>
+</div>
+<button class="w-full py-3 px-space-md rounded-xl bg-[#FF6B4A] text-on-primary font-label-lg text-label-lg shadow-[0_6px_18px_rgba(255,107,74,0.35)] hover:shadow-[0_8px_24px_rgba(255,107,74,0.45)] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2" type="submit">
+<span>Search flights</span>
+<span class="material-symbols-outlined text-lg">near_me</span>
+</button>
+</div>
+</form>
+<!-- Micro Flight Guarantee Banner -->
+<div class="mt-space-md pt-space-xs flex flex-wrap items-center justify-between text-on-surface-variant font-body-sm text-body-sm gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="inline-flex items-center gap-1 text-primary font-label-md text-label-md">
+<span class="material-symbols-outlined text-sm">verified</span> Verified Pricing
+          </span>
+<span class="text-surface-dim">•</span>
+<span>No hidden booking surcharges</span>
+<span class="text-surface-dim hidden sm:inline">•</span>
+<span class="hidden sm:inline">24/7 Aviation Concierge Dispatch</span>
+</div>
+<a class="text-primary hover:underline font-label-md text-label-md flex items-center gap-0.5" href="#">
+<span>Explore low fare calendar</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</a>
+</div>
+</div>
+</section>
+<!-- Decorative Flight Path Weaving -->
+<div class="w-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin -my-4 relative pointer-events-none">
+<div class="w-full flex items-center justify-end pr-16 opacity-40">
+<span class="font-code-flight text-code-flight text-primary mr-3 text-xs tracking-widest">FLIGHT WAYPOINT // 21.42° N, 92.00° E</span>
+<div class="w-32 border-b-2 border-dashed border-primary"></div>
+<span class="material-symbols-outlined text-primary text-base transform rotate-45 ml-1">airplanemode_active</span>
+</div>
+</div>
